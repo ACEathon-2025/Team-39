@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OuchMyBrain.io - Smart Flashcards</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
+                linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 30%, #16213e 70%, #0f3460 100%);
+            min-height: 100vh;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .back-btn {
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00ff96 0%, #00d4ff 50%, #9945ff 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .tagline {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 2rem;
+        }
+
+        .study-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .flashcard-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1000px;
+            margin: 2rem 0;
+        }
+
+        .flashcard {
+            width: 100%;
+            max-width: 600px;
+            height: 400px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 2rem;
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .card-front {
+            background: linear-gradient(135deg, rgba(0, 255, 150, 0.1), rgba(0, 212, 255, 0.1));
+            border-color: rgba(0, 255, 150, 0.3);
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, rgba(153, 69, 255, 0.1), rgba(255, 100, 150, 0.1));
+            border-color: rgba(153, 69, 255, 0.3);
+            transform: rotateY(180deg);
+        }
+
+        .card-face::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .flashcard:hover .card-face::before {
+            left: 100%;
+        }
+
+        .card-type {
+            position: absolute;
+            top: 1.5rem;
+            left: 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .card-difficulty {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .difficulty-easy {
+            background: rgba(0, 255, 150, 0.2);
+            border: 1px solid rgba(0, 255, 150, 0.4);
+            color: #00ff96;
+        }
+
+        .difficulty-medium {
+            background: rgba(255, 200, 0, 0.2);
+            border: 1px solid rgba(255, 200, 0, 0.4);
+            color: #ffc800;
+        }
+
+        .difficulty-hard {
+            background: rgba(255, 100, 150, 0.2);
+            border: 1px solid rgba(255, 100, 150, 0.4);
+            color: #ff6496;
+        }
+
+        .card-content {
+            font-size: 1.4rem;
+            line-height: 1.6;
+            font-weight: 500;
+            color: #ffffff;
+            max-width: 100%;
+        }
+
+        .card-hint {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-style: italic;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 1rem;
+            padding: 1rem 1.5rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .control-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.4s ease;
+        }
+
+        .control-btn:hover::before {
+            left: 100%;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 212, 255, 0.3);
+        }
+
+        .control-btn.primary {
+            background: linear-gradient(135deg, #00ff96, #00d4ff);
+        }
+
+        .control-btn.secondary {
+            background: linear-gradient(135deg, #ff6496, #9945ff);
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.5rem;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-4px);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-info {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin: 0.5rem auto;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #00ff96, #00d4ff);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .mastery-levels {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .mastery-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .mastery-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .mastery-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .mastery-label {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 0.25rem;
+        }
+
+        .mastery-count {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .flip-hint {
+            position: absolute;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes cardFlip {
+            0% { transform: rotateY(0deg); }
+            100% { transform: rotateY(180deg); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .flashcard {
+                height: 350px;
+            }
+            
+            .card-face {
+                padding: 2rem;
+            }
+            
+            .card-content {
+                font-size: 1.2rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .navigation {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="back-btn">← Back to Home</a>
+            <h1 class="logo">🧠 Smart Flashcards</h1>
+            <p class="tagline">Spaced Repetition for Optimal Memory Retention</p>
+        </div>
+
+        <div class="study-stats">
+            <div class="stat-card">
+                <div class="stat-value" style="color: #00d4ff;" id="currentCard">1</div>
+                <div class="stat-label">Current Card</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" style="color: #00ff96;" id="masteredCount">0</div>
+                <div class="stat-label">Mastered</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" style="color: #ffc800;" id="studyStreak">7</div>
+                <div class="stat-label">Day Streak</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" style="color: #ff6496;" id="totalCards">12</div>
+                <div class="stat-label">Total Cards</div>
+            </div>
+        </div>
+
+        <div class="flashcard-container">
+            <div class="flashcard" id="flashcard" onclick="flipCard()">
+                <div class="card-face card-front">
+                    <div class="card-type">Question</div>
+                    <div class="card-difficulty difficulty-medium" id="cardDifficulty">Medium</div>
+                    <div class="card-content" id="questionContent">
+                        What is the primary function of mitochondria in cellular biology?
+                    </div>
+                    <div class="card-hint">💡 Think about energy production</div>
+                    <div class="flip-hint">Click to reveal answer</div>
+                </div>
+                
+                <div class="card-face card-back">
+                    <div class="card-type">Answer</div>
+                    <div class="card-difficulty difficulty-medium">Medium</div>
+                    <div class="card-content" id="answerContent">
+                        Mitochondria are the "powerhouse of the cell" - they produce ATP (energy) through cellular respiration, converting glucose and oxygen into usable energy for cellular processes.
+                    </div>
+                    <div class="card-hint">🔄 Click to flip back</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn secondary" onclick="markDifficult()">
+                😰 Hard
+            </button>
+            <button class="control-btn" onclick="flipCard()">
+                🔄 Flip Card
+            </button>
+            <button class="control-btn primary" onclick="markEasy()">
+                😊 Easy
+            </button>
+        </div>
+
+        <div class="navigation">
+            <button class="nav-btn" id="prevBtn" onclick="previousCard()" disabled>‹</button>
+            
+            <div class="progress-info">
+                <div id="progressText">Card 1 of 12</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 8.33%"></div>
+                </div>
+            </div>
+            
+            <button class="nav-btn" id="nextBtn" onclick="nextCard()">›</button>
+        </div>
+
+        <div class="mastery-levels">
+            <div class="mastery-card">
+                <div class="mastery-icon">🔴</div>
+                <div class="mastery-label">Learning</div>
+                <div class="mastery-count" style="color: #ff6496;" id="learningCount">8</div>
+            </div>
+            <div class="mastery-card">
+                <div class="mastery-icon">🟡</div>
+                <div class="mastery-label">Reviewing</div>
+                <div class="mastery-count" style="color: #ffc800;" id="reviewingCount">3</div>
+            </div>
+            <div class="mastery-card">
+                <div class="mastery-icon">🟢</div>
+                <div class="mastery-label">Mastered</div>
+                <div class="mastery-count" style="color: #00ff96;" id="masteredCountDetail">1</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Flashcard data
+        const flashcards = [
+            {
+                id: 1,
+                question: "What is the primary function of mitochondria in cellular biology?",
+                answer: "Mitochondria are the 'powerhouse of the cell' - they produce ATP (energy) through cellular respiration, converting glucose and oxygen into usable energy for cellular processes.",
+                difficulty: "medium",
+                hint: "Think about energy production",
+                mastery: "learning",
+                nextReview: new Date(Date.now() + 24 * 60 * 60 * 1000)
+            },
+            {
+                id: 2,
+                question: "What are the three main components of cell theory?",
+                answer: "1. All living things are made of cells\n2. Cells are the basic unit of life\n3. All cells come from pre-existing cells",
+                difficulty: "easy",
+                hint: "Think about the fundamental principles of life",
+                mastery: "learning",
+                nextReview: new Date(Date.now() + 12 * 60 * 60 * 1000)
+            },
+            {
+                id: 3,
+                question: "What is the difference between prokaryotic and eukaryotic cells?",
+                answer: "Prokaryotic cells lack a membrane-bound nucleus (like bacteria), while eukaryotic cells have a membrane-bound nucleus containing their genetic material (like plant and animal cells).",
+                difficulty: "medium",
+                hint: "Focus on the nucleus",
+                mastery: "reviewing",
+                nextReview: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
+            },
+            {
+                id: 4,
+                question: "What is the role of ribosomes in protein synthesis?",
+                answer: "Ribosomes are the cellular structures where proteins are synthesized. They read mRNA sequences and translate them into amino acid chains, forming proteins.",
+                difficulty: "medium",
+                hint: "Think about protein manufacturing",
+                mastery: "learning",
+                nextReview: new Date(Date.now() + 24 * 60 * 60 * 1000)
+            },
+            {
+                id: 5,
+                question: "What is the function of the endoplasmic reticulum?",
+                answer: "The ER is a network of membranes that transports materials throughout the cell. Rough ER (with ribosomes) processes proteins, while smooth ER synthesizes lipids and detoxifies substances.",
+                difficulty: "hard",
+                hint: "Think about cellular transport and processing",
+                mastery: "learning",
+                nextReview: new Date(Date.now() + 24 * 60 * 60 * 1000)
+            },
+            {
+                id: 6,
+                question: "What is photosynthesis and where does it occur?",
+                answer: "Photosynthesis is the process by which plants convert light energy, carbon dioxide, and water into glucose and oxygen. It occurs primarily in the chloroplasts of plant cells.",
+                difficulty: "easy",
+                hint: "Think about how plants make food",
+                mastery: "mastered",
+                nextReview: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+            },
+            {
+                id: 7,
+                question: "What is the role of DNA in cells?",
+                answer: "DNA (deoxyribonucleic acid) stores genetic information and instructions for cellular functions. It contains genes that code for proteins and is passed from parent to offspring.",
+                difficulty: "medium",
+                hint: "Think about genetic information storage",
+                mastery: "learning",
+                nextReview: new Date(Date.now() + 24 * 60 * 60 * 1000)
+            },
+            {
+                id: 8,
+                question: "What is cellular respiration?",
+                answer: "Cellular respiration is the process by which cells break down glucose in the presence of oxygen to produce ATP (energy), carbon dioxide, and water. It occurs mainly in mitochondria.",
+                difficulty: "medium",
+                hint: "Think about how cells get energy from food",
+                mastery: "reviewing",
+                nextReview: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+            },
+            {
+                id: 9,
+                question: "What is the function of the cell membrane?",
+                answer: "The cell membrane controls what enters and exits the cell, maintaining cellular homeostasis. It's selectively permeable and made of a phospholipid bilayer with embedded proteins.",
+                difficulty: "medium",
+                hint: "Think about cellular boundaries and control",
+                mastery: "learning",
+                nextReview: new Date(Date.now() + 24 * 60 * 60 * 1000)
+            },
+            {
+                id: 10,
+                question: "What are enzymes and what do they do?",
+                answer: "Enzymes are proteins that act as biological catalysts, speeding up chemical reactions in cells by lowering activation energy. They are specific to particular reactions and can be reused.",
+                difficulty: "hard",
+                hint: "Think about biological catalysts",
+                mastery: "learning",
+                nextReview: new Date(Date.now() + 24 * 60 * 60 * 1000)
+            },
+            {
+                id: 11,
+                question: "What is osmosis?",
+                answer: "Osmosis is the movement of water molecules across a selectively permeable membrane from an area of high water concentration to an area of low water concentration.",
+                difficulty: "medium",
+                hint: "Think about water movement across membranes",
+                mastery: "reviewing",
+                nextReview: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
+            },
+            {
+                id: 12,
+                question: "What is the difference between mitosis and meiosis?",
+                answer: "Mitosis produces two identical diploid cells for growth and repair, while meiosis produces four genetically different haploid gametes (sex cells) for reproduction.",
+                difficulty: "hard",
+                hint: "Think about cell division purposes",
+                mastery: "learning",
+                nextReview: new Date(Date.now() + 24 * 60 * 60 * 1000)
+            }
+        ];
+
+        // State
+        let currentCardIndex = 0;
+        let isFlipped = false;
+
+        // Initialize
+        function initializeFlashcards() {
+            updateStats();
+            loadCard();
+        }
+
+        function updateStats() {
+            const learning = flashcards.filter(card => card.mastery === 'learning').length;
+            const reviewing = flashcards.filter(card => card.mastery === 'reviewing').length;
+            const mastered = flashcards.filter(card => card.mastery === 'mastered').length;
+
+            document.getElementById('currentCard').textContent = currentCardIndex + 1;
+            document.getElementById('masteredCount').textContent = mastered;
+            document.getElementById('totalCards').textContent = flashcards.length;
+            
+            document.getElementById('learningCount').textContent = learning;
+            document.getElementById('reviewingCount').textContent = reviewing;
+            document.getElementById('masteredCountDetail').textContent = mastered;
+        }
+
+        function loadCard() {
+            const card = flashcards[currentCardIndex];
+            isFlipped = false;
+            
+            // Reset card flip
+            document.getElementById('flashcard').classList.remove('flipped');
+            
+            // Update content
+            document.getElementById('questionContent').textContent = card.question;
+            document.getElementById('answerContent').textContent = card.answer;
+            
+            // Update difficulty badges
+            const difficultyClass = `difficulty-${card.difficulty}`;
+            document.querySelectorAll('.card-difficulty').forEach(badge => {
+                badge.className = `card-difficulty ${difficultyClass}`;
+                badge.textContent = card.difficulty.charAt(0).toUpperCase() + card.difficulty.slice(1);
+            });
+            
+            // Update hint
+            document.querySelector('.card-hint').textContent = `💡 ${card.hint}`;
+            
+            // Update progress
+            const progress = ((currentCardIndex + 1) / flashcards.length) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            document.getElementById('progressText').textContent = `Card ${currentCardIndex + 1} of ${flashcards.length}`;
+            
+            // Update navigation buttons
+            document.getElementById('prevBtn').disabled = currentCardIndex === 0;
+            document.getElementById('nextBtn').disabled = currentCardIndex === flashcards.length - 1;
+        }
+
+        function flipCard() {
+            const flashcard = document.getElementById('flashcard');
+            flashcard.classList.toggle('flipped');
+            isFlipped = !isFlipped;
+        }
+
+        function nextCard() {
+            if (currentCardIndex < flashcards.length - 1) {
+                currentCardIndex++;
+                loadCard();
+            }
+        }
+
+        function previousCard() {
+            if (currentCardIndex > 0) {
+                currentCardIndex--;
+                loadCard();
+            }
+        }
+
+        function markEasy() {
+            const card = flashcards[currentCardIndex];
+            
+            // Update mastery level
+            if (card.mastery === 'learning') {
+                card.mastery = 'reviewing';
+                card.nextReview = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+            } else if (card.mastery === 'reviewing') {
+                card.mastery = 'mastered';
+                card.nextReview = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+            }
+            
+            updateStats();
+            
+            // Auto advance to next card
+            setTimeout(() => {
+                if (currentCardIndex < flashcards.length - 1) {
+                    nextCard();
+                }
+            }, 500);
+        }
+
+        function markDifficult() {
+            const card = flashcards[currentCardIndex];
+            
+            // Reset to learning if it was higher
+            if (card.mastery !== 'learning') {
+                card.mastery = 'learning';
+                card.nextReview = new Date(Date.now() + 24 * 60 * 60 * 1000);
+            } else {
+                // Keep in learning but review sooner
+                card.nextReview = new Date(Date.now() + 12 * 60 * 60 * 1000);
+            }
+            
+            updateStats();
+            
+            // Auto advance to next card
+            setTimeout(() => {
+                if (currentCardIndex < flashcards.length - 1) {
+                    nextCard();
+                }
+            }, 500);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                flipCard();
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                nextCard();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                previousCard();
+            } else if (e.key === '1') {
+                markDifficult();
+            } else if (e.key === '2') {
+                markEasy();
+            }
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initializeFlashcards);
+    </script>
+</body>
+</html>
