@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OuchMyBrain.io - Student Companion (v2)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
+                linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 30%, #16213e 70%, #0f3460 100%);
+            min-height: 100vh;
+            color: #ffffff;
+            overflow: hidden; /* lock page scroll */
+            position: relative;
+        }
+
+        .container { width: 100vw; height: 100vh; padding: 0; display: flex; flex-direction: column; position: relative; z-index: 2; overflow: hidden; }
+
+        .navbar { height: 64px; padding: 0 1rem; display: flex; align-items: center; justify-content: space-between; backdrop-filter: blur(16px); background: rgba(10,10,20,0.6); border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .nav-left { display: flex; align-items: center; gap: 0.75rem; }
+        .logo { font-size: 1.4rem; font-weight: 800; background: linear-gradient(135deg, #00d4ff 0%, #9945ff 50%, #ff6496 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-right { display: flex; align-items: center; gap: 0.75rem; }
+        .upload-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 0.5rem 0.9rem; border-radius: 0.6rem; cursor: pointer; transition: all 0.2s ease; font-weight: 600; }
+        .upload-btn:hover { background: rgba(255,255,255,0.18); transform: translateY(-1px); }
+        .file-input { display: none; }
+        .filename { font-size: 0.9rem; color: rgba(255,255,255,0.7); max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .confirm-btn { background: linear-gradient(135deg, #00d4ff, #00ff96); border: none; color: #0b1420; padding: 0.5rem 0.9rem; border-radius: 0.6rem; font-weight: 800; cursor: pointer; display: none; }
+        .lang-toggle { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .lang-menu { position: absolute; top: 58px; right: 1rem; background: rgba(10,12,22,0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.75rem; overflow: hidden; display: none; }
+        .lang-menu button { display: block; width: 160px; text-align: left; padding: 0.6rem 0.8rem; background: transparent; color: #fff; border: none; cursor: pointer; }
+        .lang-menu button:hover { background: rgba(255,255,255,0.08); }
+
+        .main-grid { display: grid; grid-template-columns: 1.1fr 1.3fr; gap: 1.75rem; flex: 1; opacity: 0; animation: fadeInUp 1s ease-out 0.3s forwards; min-height: 0; height: calc(100vh - 64px); padding: 1rem; }
+
+        .card { background: linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%), rgba(15, 20, 30, 0.9); backdrop-filter: blur(25px) saturate(200%); border: 1px solid; border-image: linear-gradient(145deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05)) 1; border-radius: 3.5rem; padding: 3.25rem; position: relative; overflow: hidden; transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1); cursor: pointer; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3), 0 12px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.1); }
+        .card::after { content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px; background: linear-gradient(45deg, rgba(0, 212, 255, 0.5), rgba(153, 69, 255, 0.5), rgba(0, 255, 150, 0.5), rgba(255, 100, 150, 0.5)); border-radius: 3.5rem; opacity: 0; z-index: -1; transition: opacity 0.3s ease; filter: blur(6px); }
+        .card:hover { transform: translateY(-12px) scale(1.02); box-shadow: 0 40px 80px rgba(0, 0, 0, 0.4), 0 20px 40px rgba(0, 212, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2); }
+        .card:hover::after { opacity: 1; }
+
+        .summary-card { display: flex; flex-direction: column; height: 100%; overflow: hidden; border-radius: 3.75rem; margin-left: 3rem; }
+
+        .right-column { display: grid; grid-template-rows: 1fr 1fr; gap: 1.25rem; height: 100%; }
+        .top-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+        .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+        .top-row .card, .bottom-row .card { min-height: 300px; }
+
+        .card-title { font-size: 2.1rem; font-weight: 600; margin-bottom: 1rem; color: #ffffff; letter-spacing: -0.02em; }
+        .summary-card .card-title { font-size: 2.8rem; margin-bottom: 1.5rem; background: linear-gradient(135deg, #9945ff 0%, #00d4ff 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .card-description { font-size: 1rem; color: rgba(255, 255, 255, 0.7); line-height: 1.6; font-weight: 300; }
+
+        .card-icon { width: 96px; height: 96px; margin: 0 auto 1.75rem; background: linear-gradient(135deg, #00d4ff, #9945ff); border-radius: 1.3rem; display: flex; align-items: center; justify-content: center; font-size: 2.4rem; transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); position: relative; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+        .summary-card .card-icon { width: 110px; height: 110px; font-size: 2.8rem; margin-bottom: 2rem; }
+
+        .flash-cards { background: rgba(25, 30, 40, 0.8); }
+        .quizzes { background: rgba(30, 20, 40, 0.8); }
+        .professor-mode { background: rgba(20, 35, 25, 0.8); }
+        .smart-summaries { background: rgba(25, 25, 40, 0.8); }
+
+        .feature-badge { position: absolute; top: 1rem; right: 1rem; background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(153, 69, 255, 0.2)); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 1rem; padding: 0.3rem 0.8rem; font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; backdrop-filter: blur(10px); }
+
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px);} to { opacity: 1; transform: translateY(0);} }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px);} to { opacity: 1; transform: translateY(0);} }
+
+        @media (max-width: 768px) {
+            .main-grid { grid-template-columns: 1fr; gap: 0.75rem; height: calc(100vh - 64px); }
+            .card { padding: 1.75rem; border-radius: 2rem; }
+            .card-title { font-size: 1.5rem; }
+        }
+
+        @media (min-width: 1400px) {
+            .top-row .card, .bottom-row .card { min-height: 340px; }
+        }
+    </style>
+    </head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="nav-left">
+                <div class="logo">OuchMyBrain.io</div>
+            </div>
+            <div class="nav-right" style="position: relative;">
+                <input id="fileInput" class="file-input" type="file" accept=.pdf,.doc,.docx,.txt multiple>
+                <button class="upload-btn" id="chooseBtn">Upload PDFs</button>
+                <span id="fileName" class="filename"></span>
+                <button id="confirmBtn" class="confirm-btn">Confirm</button>
+
+                <div id="langBtn" class="lang-toggle" title="Change language">🌐</div>
+                <div id="langMenu" class="lang-menu">
+                    <button data-lang="en">English</button>
+                    <button data-lang="es">Español</button>
+                    <button data-lang="fr">Français</button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="main-grid">
+            <div class="card summary-card">
+                <div style="margin-bottom: 1rem;">
+                    <div style="display: inline-block; background: linear-gradient(135deg, #00d4ff, #9945ff); padding: 0.3rem 0.8rem; border-radius: 0.5rem; font-size: 0.8rem; font-weight: 600; margin-bottom: 1rem;">📄 Generated from: Biology_Chapter3.pdf</div>
+                </div>
+                <div style="color: rgba(255,255,255,0.95); font-size: 0.9rem; text-align: left; line-height: 1.6; flex: 1; overflow-y: auto; padding-right: 0.5rem;">
+                    <h2 style="color: #00d4ff; font-size: 1.6rem; margin-bottom: 1rem; font-weight: 700; text-align: center;">🧬 Cell Biology Summary</h2>
+                    <h3 style="color: #9945ff; font-size: 1.1rem; margin: 1.5rem 0 0.5rem 0; font-weight: 600;">🔬 Core Concepts</h3>
+                    <div style="background: rgba(0, 212, 255, 0.1); padding: 1rem; border-radius: 1.2rem; margin-bottom: 1rem; border-left: 3px solid #00d4ff;">
+                        <p style="margin-bottom: 0.5rem;"><strong style="color: #00d4ff;">Cell Theory:</strong> Foundation principle that all life is cellular</p>
+                        <ul style="margin-left: 1rem; margin-bottom: 0.5rem; font-size: 0.85rem;">
+                            <li>All living things are made of cells</li>
+                            <li>Cells are the basic unit of life</li>
+                            <li>All cells come from pre-existing cells</li>
+                        </ul>
+                    </div>
+                    <h3 style="color: #9945ff; font-size: 1.1rem; margin: 1.5rem 0 0.5rem 0; font-weight: 600;">⚡ Key Organelles</h3>
+                    <div style="background: rgba(153, 69, 255, 0.1); padding: 1rem; border-radius: 1.2rem; margin-bottom: 1rem; border-left: 3px solid #9945ff;">
+                        <p style="margin-bottom: 0.5rem;"><strong style="color: #9945ff;">Mitochondria:</strong> Powerhouse of the cell</p>
+                        <ul style="margin-left: 1rem; font-size: 0.85rem;">
+                            <li>ATP synthesis through cellular respiration</li>
+                            <li>Double membrane structure</li>
+                            <li>Contains own DNA</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="feature-badge">AI Powered</div>
+            </div>
+
+            <div class="right-column">
+                <div class="top-row">
+                    <div class="card flash-cards" onclick="window.location.href='flashcards.html'">
+                        <div class="card-icon">🧠</div>
+                        <h2 class="card-title">Flash Cards</h2>
+                        <p class="card-description">Generate intelligent flashcards automatically from your study materials. Spaced repetition algorithm ensures optimal retention.</p>
+                        <div class="feature-badge">Smart</div>
+                    </div>
+                    <div class="card quizzes" onclick="window.location.href='quiz.html'">
+                        <div class="card-icon">🎯</div>
+                        <h2 class="card-title">Quizzes</h2>
+                        <p class="card-description">Adaptive quizzes with difficulty scaling. Test your knowledge with questions that adjust to your learning progress.</p>
+                        <div class="feature-badge">Adaptive</div>
+                    </div>
+                </div>
+                <div class="bottom-row">
+                    <div class="card professor-mode" onclick="window.location.href='teacher.html'">
+                        <div class="card-icon">🎓</div>
+                        <h2 class="card-title">Professor Mode</h2>
+                        <p class="card-description">Get personalized tutoring from your AI professor. Ask questions, clarify concepts, and receive detailed explanations tailored to your learning style.</p>
+                        <div class="feature-badge">Personal</div>
+                    </div>
+                    <div class="card smart-summaries" onclick="alert('Smart Summaries coming soon!')">
+                        <div class="card-icon">📄</div>
+                        <h2 class="card-title">Smart Summaries</h2>
+                        <p class="card-description">AI-curated summaries that extract key concepts from PDFs and notes, highlighting the most important ideas to review fast.</p>
+                        <div class="feature-badge">Smart</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        // Upload flow
+        const chooseBtn = document.getElementById('chooseBtn');
+        const fileInput = document.getElementById('fileInput');
+        const fileNameEl = document.getElementById('fileName');
+        const confirmBtn = document.getElementById('confirmBtn');
+        chooseBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files && fileInput.files.length) {
+                const names = Array.from(fileInput.files).map(f => f.name).join(', ');
+                fileNameEl.textContent = names;
+                confirmBtn.style.display = 'inline-block';
+            } else {
+                fileNameEl.textContent = '';
+                confirmBtn.style.display = 'none';
+            }
+        });
+        confirmBtn.addEventListener('click', async () => {
+            if (!fileInput.files.length) return;
+            const files = Array.from(fileInput.files).slice(0, 5);
+            const form = new FormData();
+            files.forEach(f => form.append('files', f));
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Processing...';
+            try {
+                const res = await fetch('/api/process', { method: 'POST', body: form });
+                const json = await res.json();
+                if (!res.ok) throw new Error(json.error || 'Upload failed');
+                // Inject result into summary card
+                const summaryContainer = document.querySelector('.summary-card > div + div');
+                if (summaryContainer) {
+                    summaryContainer.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit; line-height: 1.6;">${json.result.replace(/[&<>]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[s]))}</pre>`;
+                }
+                confirmBtn.textContent = 'Done ✓';
+            } catch (e) {
+                alert(e.message);
+                confirmBtn.textContent = 'Confirm';
+            } finally {
+                confirmBtn.disabled = false;
+                setTimeout(() => confirmBtn.textContent = 'Confirm', 1500);
+            }
+        });
+
+        // Language toggle
+        const langBtn = document.getElementById('langBtn');
+        const langMenu = document.getElementById('langMenu');
+        langBtn.addEventListener('click', () => {
+            langMenu.style.display = langMenu.style.display === 'block' ? 'none' : 'block';
+        });
+        langMenu.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const lang = btn.getAttribute('data-lang');
+                localStorage.setItem('lang', lang);
+                langMenu.style.display = 'none';
+                langBtn.textContent = '🌐';
+            });
+        });
+        document.addEventListener('click', (e) => {
+            if (!langMenu.contains(e.target) && e.target !== langBtn) {
+                langMenu.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
+
+

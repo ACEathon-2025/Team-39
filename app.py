@@ -1,4 +1,4 @@
-﻿from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 import fitz
 import os
 import requests
@@ -9,7 +9,6 @@ app = Flask(__name__, template_folder='templates', static_folder='static')
 load_dotenv()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "mistralai/mistral-7b-instruct")
-
 
 # ---------- ROUTES ----------
 @app.route('/')
