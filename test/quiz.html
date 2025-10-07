@@ -406,7 +406,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <a href="index.html" class="back-btn">← Back to Home</a>
+            <a href="/v3" class="back-btn">← Back to Home</a>
             <h1 class="logo">🎯 Adaptive Quiz</h1>
             <p class="tagline">Test Your Knowledge with Smart Difficulty Scaling</p>
         </div>
@@ -492,7 +492,7 @@
     </div>
 
     <script>
-        // Quiz data with different difficulty levels
+        // Quiz data with different difficulty levels (fallback demo)
         const quizData = {
             easy: [
                 {
@@ -548,22 +548,68 @@
         let startTime = Date.now();
         let currentQuestions = [];
 
+        // Attempt to obtain source text for generation
+        function getSourceText() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const q = params.get('text');
+                if (q && q.trim().length > 0) return q;
+            } catch (e) {}
+            try {
+                const ss = sessionStorage.getItem('omb_text');
+                if (ss && ss.trim().length > 0) return ss;
+            } catch (e) {}
+            try {
+                const ls = localStorage.getItem('omb_text');
+                if (ls && ls.trim().length > 0) return ls;
+            } catch (e) {}
+            return '';
+        }
+
         // Initialize quiz
-        function initializeQuiz() {
-            // Mix questions from all difficulties
-            currentQuestions = [
-                ...quizData.easy,
-                ...quizData.medium,
-                ...quizData.hard
-            ].sort(() => Math.random() - 0.5).slice(0, 10);
-            
+        async function initializeQuiz() {
+            // Reset state
             currentQuestionIndex = 0;
             score = 0;
             streak = 0;
             bestStreak = 0;
             selectedAnswer = null;
             startTime = Date.now();
-            
+
+            // Try to fetch generated quiz from backend
+            const text = getSourceText();
+            let loaded = false;
+            if (text && text.trim().length > 0) {
+                try {
+                    const res = await fetch('/api/quiz_json', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text, count: 10 })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data && Array.isArray(data.questions) && data.questions.length > 0) {
+                        currentQuestions = data.questions.map(q => ({
+                            question: q.question,
+                            options: q.options,
+                            correct: q.correct,
+                            explanation: q.explanation || ''
+                        }));
+                        loaded = true;
+                    }
+                } catch (e) {
+                    // Ignore and fallback
+                }
+            }
+
+            // Fallback to built-in demo set
+            if (!loaded) {
+                currentQuestions = [
+                    ...quizData.easy,
+                    ...quizData.medium,
+                    ...quizData.hard
+                ].sort(() => Math.random() - 0.5).slice(0, 10);
+            }
+
             updateStats();
             loadQuestion();
         }
@@ -695,7 +741,7 @@
         }
 
         function goHome() {
-            window.location.href = 'index.html';
+            window.location.href = '/';
         }
 
         // Initialize on page load
@@ -703,3 +749,5 @@
     </script>
 </body>
 </html>
+
+

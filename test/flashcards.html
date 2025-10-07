@@ -418,7 +418,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <a href="index.html" class="back-btn">← Back to Home</a>
+            <a href="/v3" class="back-btn">← Back to Home</a>
             <h1 class="logo">🧠 Smart Flashcards</h1>
             <p class="tagline">Spaced Repetition for Optimal Memory Retention</p>
         </div>
@@ -510,124 +510,76 @@
     </div>
 
     <script>
-        // Flashcard data
-        const flashcards = [
-            {
-                id: 1,
-                question: "What is the primary function of mitochondria in cellular biology?",
-                answer: "Mitochondria are the 'powerhouse of the cell' - they produce ATP (energy) through cellular respiration, converting glucose and oxygen into usable energy for cellular processes.",
-                difficulty: "medium",
-                hint: "Think about energy production",
-                mastery: "learning",
-                nextReview: new Date(Date.now() + 24 * 60 * 60 * 1000)
-            },
-            {
-                id: 2,
-                question: "What are the three main components of cell theory?",
-                answer: "1. All living things are made of cells\n2. Cells are the basic unit of life\n3. All cells come from pre-existing cells",
-                difficulty: "easy",
-                hint: "Think about the fundamental principles of life",
-                mastery: "learning",
-                nextReview: new Date(Date.now() + 12 * 60 * 60 * 1000)
-            },
-            {
-                id: 3,
-                question: "What is the difference between prokaryotic and eukaryotic cells?",
-                answer: "Prokaryotic cells lack a membrane-bound nucleus (like bacteria), while eukaryotic cells have a membrane-bound nucleus containing their genetic material (like plant and animal cells).",
-                difficulty: "medium",
-                hint: "Focus on the nucleus",
-                mastery: "reviewing",
-                nextReview: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
-            },
-            {
-                id: 4,
-                question: "What is the role of ribosomes in protein synthesis?",
-                answer: "Ribosomes are the cellular structures where proteins are synthesized. They read mRNA sequences and translate them into amino acid chains, forming proteins.",
-                difficulty: "medium",
-                hint: "Think about protein manufacturing",
-                mastery: "learning",
-                nextReview: new Date(Date.now() + 24 * 60 * 60 * 1000)
-            },
-            {
-                id: 5,
-                question: "What is the function of the endoplasmic reticulum?",
-                answer: "The ER is a network of membranes that transports materials throughout the cell. Rough ER (with ribosomes) processes proteins, while smooth ER synthesizes lipids and detoxifies substances.",
-                difficulty: "hard",
-                hint: "Think about cellular transport and processing",
-                mastery: "learning",
-                nextReview: new Date(Date.now() + 24 * 60 * 60 * 1000)
-            },
-            {
-                id: 6,
-                question: "What is photosynthesis and where does it occur?",
-                answer: "Photosynthesis is the process by which plants convert light energy, carbon dioxide, and water into glucose and oxygen. It occurs primarily in the chloroplasts of plant cells.",
-                difficulty: "easy",
-                hint: "Think about how plants make food",
-                mastery: "mastered",
-                nextReview: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-            },
-            {
-                id: 7,
-                question: "What is the role of DNA in cells?",
-                answer: "DNA (deoxyribonucleic acid) stores genetic information and instructions for cellular functions. It contains genes that code for proteins and is passed from parent to offspring.",
-                difficulty: "medium",
-                hint: "Think about genetic information storage",
-                mastery: "learning",
-                nextReview: new Date(Date.now() + 24 * 60 * 60 * 1000)
-            },
-            {
-                id: 8,
-                question: "What is cellular respiration?",
-                answer: "Cellular respiration is the process by which cells break down glucose in the presence of oxygen to produce ATP (energy), carbon dioxide, and water. It occurs mainly in mitochondria.",
-                difficulty: "medium",
-                hint: "Think about how cells get energy from food",
-                mastery: "reviewing",
-                nextReview: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
-            },
-            {
-                id: 9,
-                question: "What is the function of the cell membrane?",
-                answer: "The cell membrane controls what enters and exits the cell, maintaining cellular homeostasis. It's selectively permeable and made of a phospholipid bilayer with embedded proteins.",
-                difficulty: "medium",
-                hint: "Think about cellular boundaries and control",
-                mastery: "learning",
-                nextReview: new Date(Date.now() + 24 * 60 * 60 * 1000)
-            },
-            {
-                id: 10,
-                question: "What are enzymes and what do they do?",
-                answer: "Enzymes are proteins that act as biological catalysts, speeding up chemical reactions in cells by lowering activation energy. They are specific to particular reactions and can be reused.",
-                difficulty: "hard",
-                hint: "Think about biological catalysts",
-                mastery: "learning",
-                nextReview: new Date(Date.now() + 24 * 60 * 60 * 1000)
-            },
-            {
-                id: 11,
-                question: "What is osmosis?",
-                answer: "Osmosis is the movement of water molecules across a selectively permeable membrane from an area of high water concentration to an area of low water concentration.",
-                difficulty: "medium",
-                hint: "Think about water movement across membranes",
-                mastery: "reviewing",
-                nextReview: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
-            },
-            {
-                id: 12,
-                question: "What is the difference between mitosis and meiosis?",
-                answer: "Mitosis produces two identical diploid cells for growth and repair, while meiosis produces four genetically different haploid gametes (sex cells) for reproduction.",
-                difficulty: "hard",
-                hint: "Think about cell division purposes",
-                mastery: "learning",
-                nextReview: new Date(Date.now() + 24 * 60 * 60 * 1000)
-            }
-        ];
+        // Flashcard data (fallback demo). Will be replaced by backend when possible.
+        let flashcards = [];
 
         // State
         let currentCardIndex = 0;
         let isFlipped = false;
 
+        // Helpers to get persisted source text
+        function getSourceText() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const q = params.get('text');
+                if (q && q.trim().length > 0) return q;
+            } catch (e) {}
+            try {
+                const ss = sessionStorage.getItem('omb_text');
+                if (ss && ss.trim().length > 0) return ss;
+            } catch (e) {}
+            try {
+                const ls = localStorage.getItem('omb_text');
+                if (ls && ls.trim().length > 0) return ls;
+            } catch (e) {}
+            return '';
+        }
+
         // Initialize
-        function initializeFlashcards() {
+        async function initializeFlashcards() {
+            // Default fallback demo set if backend fails
+            const fallback = [
+                { question: 'What is the basic unit of life?', answer: 'The cell.', hint: 'Fundamental biological unit', difficulty: 'easy' },
+                { question: 'Which organelle produces ATP?', answer: 'Mitochondria.', hint: 'Powerhouse', difficulty: 'medium' },
+                { question: 'Where does photosynthesis occur?', answer: 'In chloroplasts of plant cells.', hint: 'Green organelle', difficulty: 'easy' },
+                { question: 'What is osmosis?', answer: 'Diffusion of water across a semipermeable membrane.', hint: 'Water movement', difficulty: 'medium' }
+            ];
+
+            flashcards = fallback.map((c, i) => ({
+                id: i + 1,
+                question: c.question,
+                answer: c.answer,
+                difficulty: c.difficulty || 'medium',
+                hint: c.hint || 'Reflect on key idea',
+                mastery: 'learning',
+                nextReview: new Date(Date.now() + 24 * 60 * 60 * 1000)
+            }));
+
+            const text = getSourceText();
+            if (text && text.trim().length > 0) {
+                try {
+                    const res = await fetch('/api/flashcards_json', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text, count: 12 })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data && Array.isArray(data.flashcards) && data.flashcards.length > 0) {
+                        flashcards = data.flashcards.map((c, i) => ({
+                            id: i + 1,
+                            question: c.question,
+                            answer: c.answer,
+                            difficulty: c.difficulty || 'medium',
+                            hint: c.hint || 'Reflect on key idea',
+                            mastery: 'learning',
+                            nextReview: new Date(Date.now() + 24 * 60 * 60 * 1000)
+                        }));
+                    }
+                } catch (e) {
+                    // keep fallback
+                }
+            }
+
             updateStats();
             loadCard();
         }
@@ -764,3 +716,4 @@
     </script>
 </body>
 </html>
+
