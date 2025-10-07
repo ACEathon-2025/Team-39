@@ -1,91 +1,93 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 import fitz
 import os
 import requests
 from dotenv import load_dotenv
 
-app = Flask(__name__, template_folder='template')
+app = Flask(__name__, template_folder='templates', static_folder='static')
 
+load_dotenv()
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "mistralai/mistral-7b-instruct")
+
+# ---------- ROUTES ----------
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return redirect(url_for('v3'))
 
-load_dotenv()  # Load variables from .env into environment
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash-latest")
+@app.route('/v3')
+def v3():
+    return render_template('v3.html')
 
-def generate_outputs(text: str) -> str:
+
+# ---------- AI SUMMARIZER ----------
+def generate_summary(text: str) -> str:
     prompt = f"""
-    You are an expert educator. Take the following text and generate:
+You are an expert educator. Turn the following text into a concise, HTML-formatted study summary.
+Use only HTML tags like <section>, <h2>, <p>, <ul>, <li>, <strong>.
+Keep it structured and easy to read.
+-----
+{text}
+-----
+"""
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": OPENROUTER_MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 1200,
+    }
+    resp = requests.post(url, headers=headers, json=payload)
+    return resp.json()['choices'][0]['message']['content']
 
-    1. A concise structured summary (with headings and bullet points)
-    2. 5 flashcards in Q&A format
-    3. 5 multiple-choice quiz questions with answers
-    4. A short 2-minute presentation script
-
-    Text:
-    {text}
-
-    Output each section clearly labeled.
-    """
-
-    try:
-        if not GEMINI_API_KEY:
-            return "GEMINI_API_KEY is not set. Create a .env file with GEMINI_API_KEY=your_key and restart the app."
-        # Trim very long inputs to keep within token limits (approximate safeguard)
-        if len(text) > 20000:
-            text = text[:20000] + "\n\n...[truncated]"
-
-        url = (
-            "https://generativelanguage.googleapis.com/v1/models/"
-            f"{GEMINI_MODEL}:generateContent?key=" + GEMINI_API_KEY
-        )
-        payload = {
-            "contents": [
-                {"parts": [{"text": prompt}]}
-            ]
-        }
-        headers = {"Content-Type": "application/json"}
-        resp = requests.post(url, headers=headers, json=payload, timeout=60)
-        data = resp.json()
-        if resp.status_code != 200:
-            return f"Gemini API error {resp.status_code}: {data}"
-        # Parse Gemini response
-        result = (
-            data.get("candidates", [{}])[0]
-                .get("content", {})
-                .get("parts", [{}])[0]
-                .get("text")
-        )
-        return result or "[No response]"
-    except Exception as e:
-        return f"Error generating AI output: {e}"
 
 @app.route('/api/process', methods=['POST'])
 def process_pdfs():
-    try:
-        files = request.files.getlist('files')
-        if not files:
-            return jsonify({"error": "No files uploaded"}), 400
-        if len(files) > 5:
-            return jsonify({"error": "Maximum of 5 files allowed"}), 400
+    files = request.files.getlist('files')
+    combined_text = ""
+    for f in files:
+        doc = fitz.open(stream=f.read(), filetype="pdf")
+        for page in doc:
+            combined_text += page.get_text()
 
-        combined_text = ""
-        for f in files:
-            filename = f.filename or ""
-            if not filename.lower().endswith('.pdf'):
-                return jsonify({"error": f"Unsupported file type for {filename}. Only PDF is allowed."}), 400
-            doc = fitz.open(stream=f.read(), filetype="pdf")
-            for page in doc:
-                combined_text += page.get_text()
+    html_summary = generate_summary(combined_text)
+    return jsonify({"result": html_summary, "source_text": combined_text})
 
-        if not combined_text.strip():
-            return jsonify({"error": "No extractable text found in PDFs"}), 400
 
-        ai_output = generate_outputs(combined_text)
-        return jsonify({"result": ai_output})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+# ---------- CHAT FUNCTION ----------
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    data = request.get_json()
+    question = data.get('question', '')
+    summary_text = data.get('summary_text', '')
+
+    prompt = f"""
+Answer this question using ONLY the context below.
+If not found, say you don't have enough info.
+
+CONTEXT:
+{summary_text}
+
+QUESTION:
+{question}
+"""
+
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": OPENROUTER_MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 600,
+    }
+    resp = requests.post(url, headers=headers, json=payload)
+    return jsonify({"response": resp.json()['choices'][0]['message']['content']})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
