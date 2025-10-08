@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Flashcards - OuchMyBrain.io</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 30%, #16213e 70%, #0f3460 100%);
+            min-height: 100vh;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        /* HEADER */
+        .header {
+            background: rgba(15, 20, 30, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00d4ff 0%, #9945ff 50%, #ff6496 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .nav {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.75rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .nav-btn.primary {
+            background: linear-gradient(135deg, #00d4ff, #9945ff);
+            border: none;
+        }
+
+        /* CONTAINER */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* HERO SECTION */
+        .hero {
+            text-align: center;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00d4ff, #9945ff, #ff6496);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.7);
+            animation: fadeInUp 0.8s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* SETUP WIZARD */
+        .setup-wizard {
+            background: rgba(15, 20, 30, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .wizard-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .wizard-step {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .wizard-step:hover {
+            border-color: rgba(0, 212, 255, 0.5);
+            transform: translateY(-3px);
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #00d4ff, #9945ff);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .step-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem;
+            color: white;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .form-textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(0, 212, 255, 0.5);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+        }
+
+        .file-upload {
+            border: 2px dashed rgba(0, 212, 255, 0.5);
+            border-radius: 1rem;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload:hover {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: rgba(0, 212, 255, 0.7);
+        }
+
+        .file-upload-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .file-name {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: #00d4ff;
+        }
+
+        .generate-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #00d4ff, #9945ff);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1.5rem;
+        }
+
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(153, 69, 255, 0.4);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* LOADING STATE */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* FLASHCARD APP */
+        .flashcard-app {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            background: rgba(15, 20, 30, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            height: fit-content;
+            position: sticky;
+            top: 90px;
+        }
+
+        .stats {
+            margin-bottom: 2rem;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .stat-value {
+            font-weight: 700;
+            font-size: 1.1rem;
+            background: linear-gradient(135deg, #00d4ff, #9945ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .category-filter {
+            margin-bottom: 1rem;
+        }
+
+        .category-btn {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 0.5rem;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .category-btn:hover, .category-btn.active {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: rgba(0, 212, 255, 0.5);
+        }
+
+        /* FLASHCARD AREA */
+        .flashcard-area {
+            background: rgba(15, 20, 30, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            padding: 2rem;
+        }
+
+        .flashcard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .flashcard-counter {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .flashcard-controls {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* FLASHCARD */
+        .flashcard-container {
+            perspective: 1000px;
+            margin-bottom: 2rem;
+        }
+
+        .flashcard {
+            width: 100%;
+            min-height: 400px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-face {
+            position: absolute;
+            width: 100%;
+            min-height: 400px;
+            backface-visibility: hidden;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .flashcard-front {
+            z-index: 2;
+        }
+
+        .flashcard-back {
+            transform: rotateY(180deg);
+        }
+
+        .card-label {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-content {
+            font-size: 1.8rem;
+            font-weight: 600;
+            line-height: 1.5;
+            max-width: 800px;
+        }
+
+        .card-hint {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 0.75rem;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .card-category {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            background: rgba(153, 69, 255, 0.3);
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* NAVIGATION */
+        .flashcard-nav {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .nav-button {
+            background: linear-gradient(135deg, #00d4ff, #9945ff);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .nav-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(153, 69, 255, 0.4);
+        }
+
+        .nav-button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .nav-button.secondary {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* PROGRESS BAR */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #00d4ff, #9945ff);
+            transition: width 0.3s ease;
+        }
+
+        /* ERROR MESSAGE */
+        .error-message {
+            background: rgba(255, 100, 100, 0.2);
+            border: 1px solid rgba(255, 100, 100, 0.5);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #ff6464;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .flashcard-app {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: static;
+            }
+
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .card-content {
+                font-size: 1.3rem;
+            }
+
+            .flashcard-face {
+                padding: 2rem;
+                min-height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-content">
+            <a href="/" class="logo">
+                🧠 OuchMyBrain.io
+            </a>
+            <div class="nav">
+                <a href="/" class="nav-btn">Home</a>
+                <a href="/teacher" class="nav-btn">Professor Mode</a>
+                <a href="/time" class="nav-btn">Study Scheduler</a>
+                <a href="/smart" class="nav-btn">Smart Summary</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- HERO -->
+        <div class="hero">
+            <h1 class="hero-title">🎴 AI Flashcards</h1>
+            <p class="hero-subtitle">Master concepts through active recall and spaced repetition</p>
+        </div>
+
+        <!-- SETUP WIZARD -->
+        <div id="setupWizard" class="setup-wizard">
+            <div class="wizard-steps">
+                <!-- Step 1: Input Method -->
+                <div class="wizard-step">
+                    <div class="step-number">1</div>
+                    <h3 class="step-title">Choose Input</h3>
+                    <div class="form-group">
+                        <label class="form-label">Input Method</label>
+                        <select id="inputMethod" class="form-select" onchange="toggleInputMethod()">
+                            <option value="pdf">Upload PDF</option>
+                            <option value="text">Paste Text/Notes</option>
+                        </select>
+                    </div>
+                    
+                    <div id="pdfUploadSection">
+                        <div class="file-upload" onclick="document.getElementById('pdfInput').click()">
+                            <div class="file-upload-icon">📚</div>
+                            <div>Click to upload PDFs</div>
+                            <div class="file-name" id="fileName"></div>
+                        </div>
+                        <input type="file" id="pdfInput" accept=".pdf" multiple style="display: none;" onchange="handleFileUpload(event)">
+                    </div>
+
+                    <div id="textInputSection" class="hidden">
+                        <textarea id="textInput" class="form-textarea" placeholder="Paste your notes, summary, or study material here..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Step 2: Settings -->
+                <div class="wizard-step">
+                    <div class="step-number">2</div>
+                    <h3 class="step-title">Settings</h3>
+                    <div class="form-group">
+                        <label class="form-label">Number of Cards</label>
+                        <input type="number" id="cardCount" class="form-input" min="5" max="50" value="20">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Difficulty Level</label>
+                        <select id="difficulty" class="form-select">
+                            <option value="easy">Easy - Basic Recall</option>
+                            <option value="medium" selected>Medium - Application</option>
+                            <option value="hard">Hard - Deep Analysis</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Step 3: Generate -->
+                <div class="wizard-step">
+                    <div class="step-number">3</div>
+                    <h3 class="step-title">Generate</h3>
+                    <p style="color: rgba(255,255,255,0.6); margin-bottom: 1rem;">
+                        AI will analyze your materials and create effective flashcards for optimal learning.
+                    </p>
+                    <button class="generate-btn" id="generateBtn" onclick="generateFlashcards()" disabled>
+                        🚀 Generate Flashcards
+                    </button>
+                </div>
+            </div>
+            <div id="errorMessage" class="error-message hidden"></div>
+        </div>
+
+        <!-- LOADING STATE -->
+        <div id="loadingState" class="loading hidden">
+            <div class="spinner"></div>
+            <div class="loading-text">✨ AI is creating your flashcards...</div>
+        </div>
+
+        <!-- FLASHCARD APP -->
+        <div id="flashcardApp" class="flashcard-app hidden">
+            <!-- SIDEBAR -->
+            <div class="sidebar">
+                <div class="stats">
+                    <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">📊 Stats</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Cards</span>
+                        <span class="stat-value" id="totalCards">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Current</span>
+                        <span class="stat-value" id="currentCard">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Difficulty</span>
+                        <span class="stat-value" id="difficultyDisplay">-</span>
+                    </div>
+                </div>
+
+                <div class="category-filter">
+                    <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">📁 Categories</h3>
+                    <div id="categoryList"></div>
+                </div>
+
+                <button class="generate-btn" onclick="resetApp()" style="margin-top: 1.5rem;">
+                    🔄 New Set
+                </button>
+            </div>
+
+            <!-- FLASHCARD AREA -->
+            <div class="flashcard-area">
+                <div class="flashcard-header">
+                    <div class="flashcard-counter">
+                        <span id="cardCounter">Card 0 of 0</span>
+                    </div>
+                    <div class="flashcard-controls">
+                        <button class="control-btn" onclick="shuffleCards()">🔀 Shuffle</button>
+                        <button class="control-btn" onclick="toggleHint()">💡 Hint</button>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+
+                <div class="flashcard-container">
+                    <div class="flashcard" id="flashcard" onclick="flipCard()">
+                        <div class="flashcard-face flashcard-front">
+                            <div class="card-label">Question</div>
+                            <div class="card-content" id="questionText">Click Generate to start</div>
+                            <div class="card-hint hidden" id="hintText"></div>
+                            <div class="card-category" id="cardCategory"></div>
+                        </div>
+                        <div class="flashcard-face flashcard-back">
+                            <div class="card-label">Answer</div>
+                            <div class="card-content" id="answerText">-</div>
+                            <div class="card-category" id="cardCategoryBack"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flashcard-nav">
+                    <button class="nav-button secondary" id="prevBtn" onclick="previousCard()" disabled>
+                        ← Previous
+                    </button>
+                    <button class="nav-button" id="nextBtn" onclick="nextCard()" disabled>
+                        Next →
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let flashcardData = null;
+        let currentIndex = 0;
+        let uploadedFiles = [];
+        let summaryText = '';
+        let sourceText = '';
+        let currentFilter = 'all';
+        let filteredCards = [];
+        let hintVisible = false;
+
+        // Toggle input method
+        function toggleInputMethod() {
+            const method = document.getElementById('inputMethod').value;
+            const pdfSection = document.getElementById('pdfUploadSection');
+            const textSection = document.getElementById('textInputSection');
+            
+            if (method === 'pdf') {
+                pdfSection.classList.remove('hidden');
+                textSection.classList.add('hidden');
+            } else {
+                pdfSection.classList.add('hidden');
+                textSection.classList.remove('hidden');
+            }
+            
+            checkGenerateButton();
+        }
+
+        // Handle file upload
+        function handleFileUpload(event) {
+            uploadedFiles = Array.from(event.target.files);
+            const fileNameEl = document.getElementById('fileName');
+            
+            if (uploadedFiles.length > 0) {
+                fileNameEl.textContent = uploadedFiles.length === 1 
+                    ? uploadedFiles[0].name 
+                    : `${uploadedFiles.length} files selected`;
+                checkGenerateButton();
+            }
+        }
+
+        // Check if generate button should be enabled
+        function checkGenerateButton() {
+            const method = document.getElementById('inputMethod').value;
+            const generateBtn = document.getElementById('generateBtn');
+            
+            if (method === 'pdf') {
+                generateBtn.disabled = uploadedFiles.length === 0;
+            } else {
+                const textInput = document.getElementById('textInput').value.trim();
+                generateBtn.disabled = textInput.length === 0;
+            }
+        }
+
+        // Listen to text input changes
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('textInput').addEventListener('input', checkGenerateButton);
+        });
+
+        // Generate flashcards
+        async function generateFlashcards() {
+            const method = document.getElementById('inputMethod').value;
+            const difficulty = document.getElementById('difficulty').value;
+            const count = parseInt(document.getElementById('cardCount').value);
+            
+            // Show loading
+            document.getElementById('setupWizard').classList.add('hidden');
+            document.getElementById('loadingState').classList.remove('hidden');
+            document.getElementById('errorMessage').classList.add('hidden');
+
+            try {
+                let contentToProcess = '';
+                
+                if (method === 'text') {
+                    // Direct text input
+                    contentToProcess = document.getElementById('textInput').value.trim();
+                    sourceText = contentToProcess;
+                    summaryText = contentToProcess.substring(0, 500); // Use first 500 chars as summary
+                } else {
+                    // PDF upload - process via backend
+                    if (!uploadedFiles || uploadedFiles.length === 0) {
+                        throw new Error('Please select at least one PDF.');
+                    }
+
+                    const formData = new FormData();
+                    // Backend supports both 'file' and 'files'; send as 'files' list
+                    uploadedFiles.forEach(f => formData.append('files', f));
+
+                    // Send PDFs to backend for processing
+                    const processResp = await fetch('/api/process', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!processResp.ok) {
+                        const err = await processResp.json().catch(() => ({}));
+                        throw new Error(err.error || 'Failed to process PDF(s)');
+                    }
+
+                    const processData = await processResp.json();
+                    // Expected fields from backend: result (summary), source_text (full text)
+                    summaryText = (processData.result || '').toString();
+                    sourceText = (processData.source_text || '').toString();
+                    if (!sourceText && !summaryText) {
+                        throw new Error('Processed PDFs returned no text.');
+                    }
+                }
+
+                // Call the API to generate flashcards
+                const response = await fetch('/api/generate-flashcards', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        summaryText: summaryText,
+                        sourceText: sourceText,
+                        difficulty: difficulty,
+                        count: count
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to generate flashcards');
+                }
+
+                flashcardData = await response.json();
+                
+                // Initialize flashcard display
+                initializeFlashcards();
+                
+            } catch (error) {
+                console.error('Error generating flashcards:', error);
+                showError(error.message);
+                document.getElementById('setupWizard').classList.remove('hidden');
+                document.getElementById('loadingState').classList.add('hidden');
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = '⚠️ ' + message;
+            errorEl.classList.remove('hidden');
+        }
+
+        // Initialize flashcards
+        function initializeFlashcards() {
+            if (!flashcardData || !flashcardData.flashcards) {
+                showError('No flashcards were generated');
+                return;
+            }
+
+            currentIndex = 0;
+            filteredCards = flashcardData.flashcards;
+            currentFilter = 'all';
+            
+            // Hide loading and setup, show app
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('flashcardApp').classList.remove('hidden');
+            
+            // Update stats
+            document.getElementById('totalCards').textContent = flashcardData.metadata.totalCards;
+            document.getElementById('currentCard').textContent = 1;
+            document.getElementById('difficultyDisplay').textContent = 
+                flashcardData.metadata.difficulty.charAt(0).toUpperCase() + 
+                flashcardData.metadata.difficulty.slice(1);
+            
+            // Setup categories
+            setupCategories();
+            
+            // Load first card
+            loadCard(currentIndex);
+        }
+
+        // Setup category filters
+        function setupCategories() {
+            const categoryList = document.getElementById('categoryList');
+            categoryList.innerHTML = '';
+            
+            // Add "All" category
+            const allBtn = document.createElement('button');
+            allBtn.className = 'category-btn active';
+            allBtn.textContent = '📂 All Categories';
+            allBtn.onclick = () => filterByCategory('all');
+            categoryList.appendChild(allBtn);
+            
+            // Add individual categories
+            if (flashcardData.metadata.categories) {
+                flashcardData.metadata.categories.forEach(category => {
+                    const btn = document.createElement('button');
+                    btn.className = 'category-btn';
+                    btn.textContent = `📁 ${category}`;
+                    btn.onclick = () => filterByCategory(category);
+                    categoryList.appendChild(btn);
+                });
+            }
+        }
+
+        // Filter by category
+        function filterByCategory(category) {
+            currentFilter = category;
+            
+            if (category === 'all') {
+                filteredCards = flashcardData.flashcards;
+            } else {
+                filteredCards = flashcardData.flashcards.filter(card => card.category === category);
+            }
+            
+            // Update active button
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Reset to first card
+            currentIndex = 0;
+            loadCard(currentIndex);
+            updateStats();
+        }
+
+        // Update stats
+        function updateStats() {
+            document.getElementById('totalCards').textContent = filteredCards.length;
+            document.getElementById('currentCard').textContent = currentIndex + 1;
+        }
+
+        // Load card
+        function loadCard(index) {
+            if (!filteredCards || filteredCards.length === 0) return;
+            
+            const card = filteredCards[index];
+            
+            // Reset flip state
+            document.getElementById('flashcard').classList.remove('flipped');
+            hintVisible = false;
+            
+            // Update content
+            document.getElementById('questionText').textContent = card.question;
+            document.getElementById('answerText').textContent = card.answer;
+            document.getElementById('hintText').textContent = card.hint || 'No hint available';
+            document.getElementById('hintText').classList.add('hidden');
+            
+            // Update category badges
+            document.getElementById('cardCategory').textContent = card.category;
+            document.getElementById('cardCategoryBack').textContent = card.category;
+            
+            // Update counter and progress
+            document.getElementById('cardCounter').textContent = `Card ${currentIndex + 1} of ${filteredCards.length}`;
+            const progress = ((currentIndex + 1) / filteredCards.length) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            
+            // Update navigation buttons
+            document.getElementById('prevBtn').disabled = currentIndex === 0;
+            document.getElementById('nextBtn').disabled = currentIndex === filteredCards.length - 1;
+            
+            updateStats();
+        }
+
+        // Flip card
+        function flipCard() {
+            document.getElementById('flashcard').classList.toggle('flipped');
+        }
+
+        // Next card
+        function nextCard() {
+            if (currentIndex < filteredCards.length - 1) {
+                currentIndex++;
+                loadCard(currentIndex);
+            }
+        }
+
+        // Previous card
+        function previousCard() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                loadCard(currentIndex);
+            }
+        }
+
+        // Shuffle cards
+        function shuffleCards() {
+            for (let i = filteredCards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [filteredCards[i], filteredCards[j]] = [filteredCards[j], filteredCards[i]];
+            }
+            currentIndex = 0;
+            loadCard(currentIndex);
+        }
+
+        // Toggle hint
+        function toggleHint() {
+            const hintEl = document.getElementById('hintText');
+            hintVisible = !hintVisible;
+            if (hintVisible) {
+                hintEl.classList.remove('hidden');
+            } else {
+                hintEl.classList.add('hidden');
+            }
+        }
+
+        // Reset app
+        function resetApp() {
+            document.getElementById('flashcardApp').classList.add('hidden');
+            document.getElementById('setupWizard').classList.remove('hidden');
+            document.getElementById('generateBtn').disabled = true;
+            document.getElementById('textInput').value = '';
+            document.getElementById('fileName').textContent = '';
+            uploadedFiles = [];
+            flashcardData = null;
+            currentIndex = 0;
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Only activate shortcuts when flashcard app is visible
+            if (document.getElementById('flashcardApp').classList.contains('hidden')) return;
+            
+            switch(e.key) {
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    previousCard();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    nextCard();
+                    break;
+                case ' ':
+                case 'Enter':
+                    e.preventDefault();
+                    flipCard();
+                    break;
+                case 'h':
+                    e.preventDefault();
+                    toggleHint();
+                    break;
+                case 's':
+                    e.preventDefault();
+                    shuffleCards();
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>

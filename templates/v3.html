@@ -1,10 +1,12 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OuchMyBrain.io - AI Study Companion</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -255,6 +257,199 @@
             font-weight: 600;
             margin-bottom: 1.5rem;
         }
+        /* FLOATING CHAT WINDOW */
+        .floating-chat {
+            position: fixed;
+            bottom: 2rem;
+            left: 6rem;
+            width: 420px;
+            height: 560px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(15, 20, 30, 0.98);
+            backdrop-filter: blur(25px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .floating-chat.minimized {
+            height: 60px;
+            overflow: hidden;
+        }
+
+        .floating-chat-header {
+            padding: 1rem 1.25rem;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(153, 69, 255, 0.15));
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem 1.5rem 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+
+        .floating-chat-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .floating-chat-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-control-btn {
+            width: 28px;
+            height: 28px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .chat-control-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .floating-chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .floating-chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .floating-chat-messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .floating-chat-messages::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #00d4ff, #9945ff);
+            border-radius: 2px;
+        }
+
+        .floating-chat-input-container {
+            padding: 1rem;
+            background: rgba(15, 20, 30, 0.95);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0 0 1.5rem 1.5rem;
+        }
+
+        .floating-chat-input-wrapper {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .floating-chat-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 0.75rem 1rem;
+            color: #ffffff;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .floating-chat-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(0, 212, 255, 0.5);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+        }
+
+        .floating-chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .floating-send-button {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #00d4ff, #9945ff);
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(153, 69, 255, 0.3);
+        }
+
+        .floating-send-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(153, 69, 255, 0.4);
+        }
+
+        .floating-send-button:active {
+            transform: scale(0.95);
+        }
+
+        .floating-send-button svg {
+            width: 16px;
+            height: 16px;
+            fill: white;
+        }
+
+        /* MOBILE RESPONSIVE */
+        @media (max-width: 1200px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+
+            .floating-chat {
+                width: 360px;
+                height: 500px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+            }
+            
+            .sidebar:hover {
+                width: 200px;
+            }
+            
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .card {
+                padding: 1.5rem;
+            }
+
+            .floating-chat {
+                width: calc(100% - 5rem);
+                left: 4rem;
+                bottom: 1rem;
+                height: 450px;
+            }
+        }
 
         .summary-content {
             flex: 1;
@@ -262,6 +457,46 @@
             padding-right: 0.5rem;
             height: calc(100% - 120px);
         }
+        .level-btn-small {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 0.6rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.level-btn-small:hover {
+    background: linear-gradient(135deg, #9945ff, #00d4ff);
+    color: white;
+    border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(153, 69, 255, 0.4);
+}
+
+.level-btn-small:active {
+    transform: translateY(0);
+}
+
+        /* Improve readability of rendered Markdown */
+        .summary-content h1,
+        .summary-content h2,
+        .summary-content h3 {
+            margin: 1rem 0 0.5rem 0;
+            line-height: 1.3;
+        }
+        .summary-content p { margin: 0.6rem 0; }
+        .summary-content ul { margin: 0.6rem 0 0.6rem 1.25rem; }
+        .summary-content li { margin: 0.35rem 0; }
+        .summary-content ul ul { margin-top: 0.25rem; }
+        .summary-content strong { color: #ffffff; }
 
         .summary-content::-webkit-scrollbar {
             width: 6px;
@@ -365,6 +600,199 @@
 
         .message.user {
             flex-direction: row-reverse;
+        }
+        /* FLOATING CHAT WINDOW */
+        .floating-chat {
+            position: fixed;
+            bottom: 2rem;
+            left: 6rem;
+            width: 420px;
+            height: 560px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(15, 20, 30, 0.98);
+            backdrop-filter: blur(25px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .floating-chat.minimized {
+            height: 60px;
+            overflow: hidden;
+        }
+
+        .floating-chat-header {
+            padding: 1rem 1.25rem;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(153, 69, 255, 0.15));
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem 1.5rem 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+
+        .floating-chat-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .floating-chat-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-control-btn {
+            width: 28px;
+            height: 28px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .chat-control-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .floating-chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .floating-chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .floating-chat-messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .floating-chat-messages::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #00d4ff, #9945ff);
+            border-radius: 2px;
+        }
+
+        .floating-chat-input-container {
+            padding: 1rem;
+            background: rgba(15, 20, 30, 0.95);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0 0 1.5rem 1.5rem;
+        }
+
+        .floating-chat-input-wrapper {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .floating-chat-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 0.75rem 1rem;
+            color: #ffffff;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .floating-chat-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(0, 212, 255, 0.5);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+        }
+
+        .floating-chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .floating-send-button {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #00d4ff, #9945ff);
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(153, 69, 255, 0.3);
+        }
+
+        .floating-send-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(153, 69, 255, 0.4);
+        }
+
+        .floating-send-button:active {
+            transform: scale(0.95);
+        }
+
+        .floating-send-button svg {
+            width: 16px;
+            height: 16px;
+            fill: white;
+        }
+
+        /* MOBILE RESPONSIVE */
+        @media (max-width: 1200px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+
+            .floating-chat {
+                width: 360px;
+                height: 500px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+            }
+            
+            .sidebar:hover {
+                width: 200px;
+            }
+            
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .card {
+                padding: 1.5rem;
+            }
+
+            .floating-chat {
+                width: calc(100% - 5rem);
+                left: 4rem;
+                bottom: 1rem;
+                height: 450px;
+            }
         }
 
         .message-avatar {
@@ -567,9 +995,57 @@
                 padding: 1.5rem;
             }
         }
+        /* Global PDF Processing Loader */
+        #globalLoader {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #globalLoader .loader-box {
+            background: rgba(15, 20, 30, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 1rem;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .loader-spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid rgba(255,255,255,0.15);
+            border-top-color: #00d4ff;
+            border-radius: 50%;
+            animation: spin2 0.9s linear infinite;
+        }
+
+        .loader-text {
+            color: rgba(255,255,255,0.9);
+            font-weight: 600;
+            letter-spacing: 0.2px;
+        }
+
+        @keyframes spin2 {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
+    <!-- Global Loader Overlay -->
+    <div id="globalLoader">
+        <div class="loader-box">
+            <div class="loader-spinner"></div>
+            <div class="loader-text">Processing PDF…</div>
+        </div>
+    </div>
     <div class="app-container">
         <!-- SIDEBAR -->
         <aside class="sidebar">
@@ -580,31 +1056,48 @@
 
             <nav class="nav-items">
                 <input type="file" id="navFileInput" accept="application/pdf" multiple style="display:none" />
+                <div class="nav-item" id="navUploadBtn" title="Upload PDFs">
+                    <div class="nav-icon">⤴️</div>
+                    <div class="nav-label">Upload</div>
+                </div>
                 <div class="nav-item active" data-view="summary">
                     <div class="nav-icon">📄</div>
                     <div class="nav-label">Summary</div>
                 </div>
-                <div class="nav-item" data-view="chat">
-                    <div class="nav-icon">💬</div>
-                    <div class="nav-label">AI Chat</div>
+                <div class="nav-item" data-view="professor" onclick="window.location.href='/teacher'">
+                    <div class="nav-icon">👨‍🏫</div>
+                    <div class="nav-label">Professor Mode</div>
                 </div>
-                <div class="nav-item" data-view="scheduler">
+                <div class="nav-item" data-view="podcast">
+                    <div class="nav-icon">🎙️</div>
+                    <div class="nav-label">Podcast Mode</div>
+                </div>
+                <div class="nav-item" data-view="scheduler" onclick="window.location.href='/time'">
                     <div class="nav-icon">📅</div>
                     <div class="nav-label">Study Scheduler</div>
+                </div>
+                <div class="nav-item" data-view="flash" onclick="window.location.href='/flash'">
+                    <div class="nav-icon">📅</div>
+                    <div class="nav-label">Flashcards</div>
                 </div>
             </nav>
         </aside>
 
         <!-- MAIN CONTENT -->
-        <main class="main-content">
-            <!-- SUMMARY VIEW -->
-            <div id="summary" class="content-section active">
+        <main class="main-content">       
                 <div class="content-grid">
                     <div class="card summary-card">
                         <div class="card-header">
-                            <h1 class="card-title" id="summaryTitle">AI Summary</h1>
-                            <button class="download-btn" onclick="downloadSummaryAsPDF()">📥 Download PDF</button>
-                        </div>
+    <h1 class="card-title" id="summaryTitle">AI Summary</h1>
+    <div style="display:flex; gap:0.75rem; align-items:center;">
+        <span style="font-size:0.85rem; color: rgba(255,255,255,0.7); font-weight: 500;">Smart Summary:</span>
+        <div style="display:flex; gap:0.5rem;">
+            <button class="level-btn-small" onclick="openSmart(1)" title="Level 1 - Quick Skim">1</button>
+            <button class="level-btn-small" onclick="openSmart(2)" title="Level 2 - Solid Pass">2</button>
+            <button class="level-btn-small" onclick="openSmart(3)" title="Level 3 - Comprehensive">3</button>
+        </div>
+    </div>
+</div>
                         <div class="file-badge" id="fileBadge">No file uploaded yet</div>
                         <div class="summary-content" id="summaryContent">
                             <p style="color: rgba(255, 255, 255, 0.6); padding: 2rem; text-align: center;">
@@ -612,78 +1105,72 @@
                             </p>
                         </div>
                     </div>
-
-                    <div class="card summary-card">
-                        <div class="card-header">
-                            <h2 class="card-title" style="font-size: 1.5rem;">Quick Actions</h2>
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 1rem;">
-                            <div class="card" style="cursor: pointer; padding: 1.5rem;" onclick="switchView('chat')">
-                                <div style="display: flex; align-items: center; gap: 1rem;">
-                                    <div style="font-size: 2rem;">💬</div>
-                                    <div>
-                                        <h3 style="font-size: 1.1rem; margin-bottom: 0.3rem;">AI Chat Assistant</h3>
-                                        <p style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">Ask questions about your study materials</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card" style="cursor: pointer; padding: 1.5rem;" onclick="switchView('scheduler')">
-                                <div style="display: flex; align-items: center; gap: 1rem;">
-                                    <div style="font-size: 2rem;">📅</div>
-                                    <div>
-                                        <h3 style="font-size: 1.1rem; margin-bottom: 0.3rem;">Study Scheduler</h3>
-                                        <p style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.6);">Create personalized study schedules</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- CHAT VIEW -->
-            <div id="chat" class="content-section">
-                <div style="max-width: 1400px; margin: 0 auto;">
                     <div class="card summary-card chat-container">
-                        <div class="chat-header">
+                        <div class="chat-header">   
                             <div class="chat-title">
-                                <span style="font-size: 1.8rem;">🤖</span>
-                                AI Study Assistant
+                                <span style="font-size: 1.5rem;">💬</span>
+                                Ask Your Professor
                             </div>
                             <div class="chat-status">
                                 <span class="status-dot"></span>
-                                <span>Ready to help with your studies</span>
+                                <span>Ready to answer your questions</span>
                             </div>
                         </div>
 
-                        <div class="chat-messages" id="chatMessages">
+                        <div class="chat-messages" id="professorChatMessages">
                             <div class="message ai">
-                                <div class="message-avatar">🤖</div>
+                                <div class="message-avatar">👨‍🏫</div>
                                 <div class="message-content">
-                                    Hello! I'm your AI study assistant. Upload a PDF first, then ask me anything about its content. I can explain concepts, clarify doubts, and help you understand complex topics.
+                                    Hello! I'm your AI professor. Upload a PDF first, then I'll explain the concepts in depth, provide examples, and answer all your questions. Think of me as your personal tutor!
                                 </div>
                             </div>
                         </div>
 
                         <div class="chat-input-container">
-                            <div class="suggested-questions" id="suggestedQuestions"></div>
+                            <div class="suggested-questions" id="professorSuggestedQuestions"></div>
                             <div class="chat-input-wrapper">
-                                <input type="file" id="chatFileInput" accept="application/pdf" multiple style="display:none" />
-                                <button class="send-button upload-button" id="chatUploadBtn" title="Upload PDF">
+                                <input type="file" id="professorFileInput" accept="application/pdf" multiple style="display:none" />
+                                <button class="send-button upload-button" id="professorUploadBtn" title="Upload PDF">
                                     <svg viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2zm7-18l-5 5h3v6h4V7h3l-5-5z"/></svg>
                                 </button>
                                 <input 
                                     type="text" 
                                     class="chat-input" 
-                                    id="chatInput"
-                                    placeholder="Ask me anything about your study materials..."
-                                    onkeypress="if(event.key==='Enter') sendMessage()"
+                                    id="professorChatInput"
+                                    placeholder="Ask your professor anything..."
+                                    onkeypress="if(event.key==='Enter') sendProfessorMessage()"
                                 >
-                                <button class="send-button" onclick="sendMessage()">
+                                <button class="send-button" onclick="sendProfessorMessage()">
                                     <svg viewBox="0 0 24 24">
                                         <path d="M2 21L23 12L2 3V10L17 12L2 14V21Z"/>
                                     </svg>
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- PODCAST MODE VIEW -->
+            <div id="podcast" class="content-section">
+                <div style="max-width: 1400px; margin: 0 auto;">
+                    <div class="card summary-card" style="height: calc(100vh - 4rem);">
+                        <div class="card-header">
+                            <h1 class="card-title">🎙️ Podcast Mode</h1>
+                            <button class="download-btn" onclick="generatePodcast()">🎧 Generate Podcast</button>
+                        </div>
+
+                        <div class="file-badge" id="podcastFileBadge">Upload PDF to create podcast</div>
+
+                        <div style="padding: 2rem; height: calc(100% - 150px); overflow-y: auto;">
+                            <div id="podcastContent">
+                                <div style="text-align: center; padding: 3rem; color: rgba(255, 255, 255, 0.6);">
+                                    <div style="font-size: 3rem; margin-bottom: 1rem;">🎧</div>
+                                    <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">Transform Your Study Materials into Audio</p>
+                                    <p style="font-size: 0.9rem;">Upload a PDF and we'll create an engaging podcast-style audio experience</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -760,7 +1247,37 @@
     <script>
         // Global state
         let currentSummaryText = '';
+        let currentSourceText = '';
         let currentDocTitle = '';
+        let currentTopicTitle = 'AI Summary';
+
+        function extractTopicTitleFromMarkdown(raw) {
+            if (!raw) return '';
+            // 1) First Markdown heading line
+            const headingMatch = raw.match(/^\s*#{1,6}\s+(.+)$/m);
+            if (headingMatch && headingMatch[1]) return headingMatch[1].trim();
+
+            // 2) Bold label and value on same line, e.g. **Topic/Main Subject:** Quantum Computing
+            const sameLine = raw.match(/^\s*\*\*\s*(Topic\s*\/?\s*Main\s*Subject|Topic|Main\s*Subject)\s*\*\*\s*[:\-–—]?\s*(.+)$/im);
+            if (sameLine && sameLine[2]) return sameLine[2].trim();
+
+            // 3) Bold label on one line, value on the next non-empty line
+            const labelOnlyIdx = raw.search(/^\s*\*\*\s*(Topic\s*\/?\s*Main\s*Subject|Topic|Main\s*Subject)\s*\*\*\s*[:\-–—]?\s*$/im);
+            if (labelOnlyIdx !== -1) {
+                const after = raw.slice(labelOnlyIdx).split(/\r?\n/).slice(1);
+                const nextNonEmpty = after.find(l => l.trim().length > 0);
+                if (nextNonEmpty) return nextNonEmpty.replace(/^[-–—\s]+/, '').trim();
+            }
+
+            // 4) Non-bold label formats, e.g. Topic: Something
+            const plain = raw.match(/^\s*(Topic\s*\/?\s*Main\s*Subject|Topic|Main\s*Subject)\s*[:\-–—]\s*(.+)$/im);
+            if (plain && plain[2]) return plain[2].trim();
+
+            // 5) Fallback: first bolded text
+            const boldLine = raw.match(/\*\*(.+?)\*\*/);
+            if (boldLine && boldLine[1]) return boldLine[1].trim();
+            return '';
+        }
 
         // View switching
         function switchView(viewName) {
@@ -796,6 +1313,7 @@
         async function processFiles(files) {
             if (!files || files.length === 0) return;
             
+            showLoader();
             try {
                 const formData = new FormData();
                 Array.from(files).slice(0, 5).forEach(f => formData.append('files', f));
@@ -812,9 +1330,12 @@
                     return;
                 }
                 
-                // Store summary text
-                currentSummaryText = data.source_text || '';
+                // Store summary and source texts
+                currentSummaryText = data.result || '';
+                currentSourceText = data.source_text || '';
                 currentDocTitle = data.doc_title || 'Document';
+                const derived = extractTopicTitleFromMarkdown(currentSummaryText);
+                if (derived) currentTopicTitle = derived;
                 
                 // Update summary view
                 const summaryContent = document.getElementById('summaryContent');
@@ -822,57 +1343,131 @@
                 const fileBadge = document.getElementById('fileBadge');
                 
                 if (summaryContent) {
-                    summaryContent.innerHTML = data.result || '<p>No summary generated</p>';
+                    const raw = data.result || '';
+                    summaryContent.innerHTML = window.marked ? marked.parse(raw) : (raw || '<p>No summary generated</p>');
                 }
                 
                 if (summaryTitle) {
-                    summaryTitle.textContent = currentDocTitle.replace(/\.pdf$/i, '');
+                    summaryTitle.textContent = (currentTopicTitle || currentDocTitle.replace(/\.pdf$/i, ''));
                 }
                 
                 if (fileBadge) {
                     fileBadge.textContent = '📄 ' + Array.from(files).map(f => f.name).join(', ');
                 }
                 
-                // Update chat welcome message
-                updateChatWelcome();
+                // Update podcast badge
+                const podcastFileBadge = document.getElementById('podcastFileBadge');
+                if (podcastFileBadge) {
+                    podcastFileBadge.textContent = '📄 ' + Array.from(files).map(f => f.name).join(', ');
+                }
+                // Persist state to sessionStorage for restore on back navigation
+                try {
+                    const filenames = Array.from(files).map(f => f.name);
+                    sessionStorage.setItem('summaryState', JSON.stringify({
+                        summary: currentSummaryText,
+                        source: currentSourceText,
+                        title: currentDocTitle,
+                        topicTitle: currentTopicTitle,
+                        files: filenames
+                    }));
+                } catch (e) { /* ignore */ }
                 
                 // Switch to summary view
                 switchView('summary');
                 
             } catch (error) {
                 alert('Error: ' + error.message);
+            } finally {
+                hideLoader();
             }
         }
 
         // Setup upload buttons
         setupUpload('navUploadBtn', 'navFileInput', processFiles);
-        setupUpload('chatUploadBtn', 'chatFileInput', (files) => {
-            processFiles(files);
-            addChatMessage('Processing your PDF...', false);
+        setupUpload('professorUploadBtn', 'professorFileInput', (files) => {
+            processProfessorFiles(files);
         });
 
-        // Chat functionality
-        function addChatMessage(content, isUser = false) {
-            const messagesEl = document.getElementById('chatMessages');
+        async function processProfessorFiles(files) {
+            if (!files || files.length === 0) return;
+            
+            addProfessorChatMessage('Processing your PDF...', false);
+            showLoader();
+            try {
+                const formData = new FormData();
+                Array.from(files).slice(0, 5).forEach(f => formData.append('files', f));
+                
+                const response = await fetch('/api/process', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    alert('Error: ' + (data.error || 'Processing failed'));
+                    return;
+                }
+                
+                // Store summary and source texts
+                currentSummaryText = data.result || '';
+                currentSourceText = data.source_text || '';
+                currentDocTitle = data.doc_title || 'Document';
+                
+                // Update professor content
+                const professorContent = document.getElementById('professorContent');
+                const professorFileBadge = document.getElementById('professorFileBadge');
+                
+                if (professorContent) {
+                    const raw = data.result || '';
+                    professorContent.innerHTML = window.marked ? marked.parse(raw) : (raw || '<p>No summary generated</p>');
+                }
+                
+                if (professorFileBadge) {
+                    professorFileBadge.textContent = '📄 ' + Array.from(files).map(f => f.name).join(', ');
+                }
+                
+                // Update professor chat
+                updateProfessorChat();
+                // Persist state after professor upload as well
+                try {
+                    const filenames = Array.from(files).map(f => f.name);
+                    sessionStorage.setItem('summaryState', JSON.stringify({
+                        summary: currentSummaryText,
+                        source: currentSourceText,
+                        title: currentDocTitle,
+                        topicTitle: currentTopicTitle,
+                        files: filenames
+                    }));
+                } catch (e) { /* ignore */ }
+                
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Professor chat functionality
+        function addProfessorChatMessage(content, isUser = false) {
+            const messagesEl = document.getElementById('professorChatMessages');
             if (!messagesEl) return;
 
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
             messageDiv.innerHTML = `
-                <div class="message-avatar">${isUser ? '👤' : '🤖'}</div>
+                <div class="message-avatar">${isUser ? '👤' : '👨‍🏫'}</div>
                 <div class="message-content">${content}</div>
             `;
             messagesEl.appendChild(messageDiv);
             messagesEl.scrollTop = messagesEl.scrollHeight;
         }
 
-        function showTypingIndicator() {
-            const messagesEl = document.getElementById('chatMessages');
+        function showProfessorTypingIndicator() {
+            const messagesEl = document.getElementById('professorChatMessages');
             const typingDiv = document.createElement('div');
             typingDiv.className = 'message ai';
-            typingDiv.id = 'typingIndicator';
+            typingDiv.id = 'professorTypingIndicator';
             typingDiv.innerHTML = `
-                <div class="message-avatar">🤖</div>
+                <div class="message-avatar">👨‍🏫</div>
                 <div class="typing-indicator">
                     <div class="typing-dot"></div>
                     <div class="typing-dot"></div>
@@ -883,28 +1478,38 @@
             messagesEl.scrollTop = messagesEl.scrollHeight;
         }
 
-        function removeTypingIndicator() {
-            const typingEl = document.getElementById('typingIndicator');
+        function removeProfessorTypingIndicator() {
+            const typingEl = document.getElementById('professorTypingIndicator');
             if (typingEl) typingEl.remove();
         }
 
-        async function sendMessage() {
-            const input = document.getElementById('chatInput');
+        // Global loader helpers
+        function showLoader() {
+            const el = document.getElementById('globalLoader');
+            if (el) el.style.display = 'flex';
+        }
+        function hideLoader() {
+            const el = document.getElementById('globalLoader');
+            if (el) el.style.display = 'none';
+        }
+
+        async function sendProfessorMessage() {
+            const input = document.getElementById('professorChatInput');
             const question = input.value.trim();
 
             if (!question) return;
 
             if (!currentSummaryText) {
-                addChatMessage('Please upload a PDF first so I can answer your questions about it.', false);
+                addProfessorChatMessage('Please upload a PDF first so I can teach you about it!', false);
                 return;
             }
 
             // Add user message
-            addChatMessage(question, true);
+            addProfessorChatMessage(question, true);
             input.value = '';
 
             // Show typing indicator
-            showTypingIndicator();
+            showProfessorTypingIndicator();
 
             try {
                 const response = await fetch('/api/chat', {
@@ -914,41 +1519,127 @@
                     },
                     body: JSON.stringify({
                         question: question,
-                        summary_text: currentSummaryText
+                        summary_text: currentSummaryText,
+                        source_text: currentSourceText,
+                        mode: 'professor'
                     })
                 });
 
                 const data = await response.json();
-                removeTypingIndicator();
+                removeProfessorTypingIndicator();
 
                 if (response.ok) {
-                    addChatMessage(data.response, false);
+                    addProfessorChatMessage(data.response, false);
                 } else {
-                    addChatMessage('Error: ' + (data.error || 'Failed to get response'), false);
+                    addProfessorChatMessage('Error: ' + (data.error || 'Failed to get response'), false);
                 }
             } catch (error) {
-                removeTypingIndicator();
-                addChatMessage('Network error: ' + error.message, false);
+                removeProfessorTypingIndicator();
+                addProfessorChatMessage('Network error: ' + error.message, false);
             }
         }
 
-        function updateChatWelcome() {
+        function updateProfessorChat() {
             if (currentSummaryText) {
-                const suggestedQuestionsEl = document.getElementById('suggestedQuestions');
+                const suggestedQuestionsEl = document.getElementById('professorSuggestedQuestions');
                 if (suggestedQuestionsEl) {
                     suggestedQuestionsEl.innerHTML = `
-                        <div class="suggested-question" onclick="askQuestion('What are the main topics covered?')">What are the main topics?</div>
-                        <div class="suggested-question" onclick="askQuestion('Summarize the key points')">Key points summary</div>
-                        <div class="suggested-question" onclick="askQuestion('What are the most important concepts?')">Important concepts</div>
+                        <div class="suggested-question" onclick="askProfessorQuestion('Explain this in simple terms')">Explain simply</div>
+                        <div class="suggested-question" onclick="askProfessorQuestion('Give me examples')">Give examples</div>
+                        <div class="suggested-question" onclick="askProfessorQuestion('What are the key concepts?')">Key concepts</div>
+                        <div class="suggested-question" onclick="askProfessorQuestion('Test my understanding')">Test me</div>
                     `;
                 }
+                
+                addProfessorChatMessage(`Great! I've reviewed your material on "${currentDocTitle}". I'm ready to explain any concepts, provide examples, or answer questions. What would you like to learn about?`, false);
             }
         }
 
-        function askQuestion(question) {
-            const input = document.getElementById('chatInput');
+        function askProfessorQuestion(question) {
+            const input = document.getElementById('professorChatInput');
             input.value = question;
-            sendMessage();
+            sendProfessorMessage();
+        }
+
+        // Open Smart Summary page with selected level
+        function openSmart(level) {
+            if (!currentSourceText) {
+                alert('Please upload a PDF first.');
+                return;
+            }
+            const payload = {
+                text: currentSourceText,
+                title: currentDocTitle,
+                level: level
+            };
+            sessionStorage.setItem('smartInput', JSON.stringify(payload));
+            window.location.href = `/smart?level=${level}`;
+        }
+
+        function openSmartFromDropdown() {
+            const sel = document.getElementById('smartLevelChooser');
+            const lvl = parseInt(sel.value, 10) || 1;
+            openSmart(lvl);
+        }
+
+        // Podcast generation
+        async function generatePodcast() {
+            if (!currentSummaryText) {
+                alert('Please upload a PDF first');
+                return;
+            }
+
+            const podcastContent = document.getElementById('podcastContent');
+            podcastContent.innerHTML = '<div style="text-align: center; padding: 3rem;"><div style="font-size: 2rem;">🎙️</div><p>Creating your podcast experience...</p></div>';
+
+            try {
+                const response = await fetch('/api/podcast', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: currentSummaryText,
+                        title: currentDocTitle
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayPodcast(data);
+                } else {
+                    podcastContent.innerHTML = `<div style="text-align: center; padding: 3rem; color: #ff6b6b;"><p>Error: ${data.error || 'Failed to generate podcast'}</p></div>`;
+                }
+            } catch (error) {
+                podcastContent.innerHTML = `<div style="text-align: center; padding: 3rem; color: #ff6b6b;"><p>Error: ${error.message}</p></div>`;
+            }
+        }
+
+        function displayPodcast(podcastData) {
+            const podcastContent = document.getElementById('podcastContent');
+            
+            let html = '<div style="display: flex; flex-direction: column; gap: 2rem;">';
+            
+            // Audio player
+            html += '<div style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(153, 69, 255, 0.1)); padding: 2rem; border-radius: 1.5rem; text-align: center;">';
+            html += '<div style="font-size: 3rem; margin-bottom: 1rem;">🎧</div>';
+            html += '<h3 style="font-size: 1.3rem; margin-bottom: 1rem;">Your Study Podcast</h3>';
+            html += '<div style="background: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: 1rem; margin-top: 1rem;">';
+            html += '<p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Audio playback coming soon!</p>';
+            html += '</div></div>';
+            
+            // Transcript
+            if (podcastData.transcript) {
+                html += '<div>';
+                html += '<h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: #9945ff;">📝 Podcast Transcript</h3>';
+                html += `<div style="background: rgba(255, 255, 255, 0.03); padding: 1.5rem; border-radius: 1rem; line-height: 1.8;">${podcastData.transcript}</div>`;
+                html += '</div>';
+            }
+            
+            html += '</div>';
+            
+            podcastContent.innerHTML = html;
         }
 
         // Schedule generation
@@ -1074,23 +1765,66 @@
 
         // Download summary as PDF
         function downloadSummaryAsPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
             const content = document.getElementById('summaryContent');
             if (!content) return;
             
-            const text = content.innerText || content.textContent;
-            const title = currentDocTitle || 'Study Summary';
+            const title = (currentTopicTitle || currentDocTitle || 'Study Summary').replace(/\s+/g, '_');
+            const rawMarkdownHTML = content.innerHTML;
             
-            doc.setFontSize(18);
-            doc.text(title, 20, 20);
+            // Build a clean, print-optimized HTML document
+            const printContainer = document.createElement('div');
+            printContainer.innerHTML = `
+                <div id="print-root">
+                    <style>
+                        @page { margin: 16mm 14mm 16mm 14mm; }
+                        body { background: #fff; color: #000; font-family: Inter, Arial, sans-serif; }
+                        .doc { color: #000; }
+                        h1, h2, h3 { margin: 0 0 10px 0; line-height: 1.25; page-break-after: avoid; }
+                        p { margin: 8px 0; }
+                        ul { margin: 8px 0 8px 20px; padding: 0; }
+                        li { margin: 6px 0; }
+                        ul ul { margin-top: 4px; }
+                        strong { color: #000; }
+                        .title { font-size: 20px; font-weight: 700; margin: 0 0 12px 0; }
+                        .hr { height: 1px; background: #ddd; margin: 10px 0 14px 0; }
+                        .page-break { page-break-before: always; }
+                    </style>
+                    <div class="doc">
+                        <div class="title">${currentTopicTitle || currentDocTitle || 'Study Summary'}</div>
+                        <div class="hr"></div>
+                        <div class="content">${rawMarkdownHTML}</div>
+                    </div>
+                </div>
+            `;
             
-            doc.setFontSize(12);
-            const splitText = doc.splitTextToSize(text, 170);
-            doc.text(splitText, 20, 35);
+            // Normalize bullets for print
+            printContainer.querySelectorAll('ul').forEach(ul => {
+                ul.style.listStyleType = 'disc';
+            });
             
-            doc.save(`${title.replace(/\s+/g, '_')}_summary.pdf`);
+            const opt = {
+                margin:       0,
+                filename:     `${title}_summary.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff', letterRendering: true },
+                pagebreak:    { mode: ['css', 'legacy'] },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            
+            if (window.html2pdf) {
+                window.html2pdf().set(opt).from(printContainer).save();
+            } else if (window.jspdf) {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+                doc.html(printContainer, {
+                    callback: function (doc) { doc.save(`${title}_summary.pdf`); },
+                    x: 0,
+                    y: 0,
+                    html2canvas: { scale: 2 }
+                });
+            } else {
+                alert('PDF generation library not loaded.');
+            }
         }
 
         // Set default start date
@@ -1100,11 +1834,31 @@
                 const today = new Date().toISOString().split('T')[0];
                 dateInput.value = today;
             }
+            // Restore prior summary if available
+            try {
+                const stored = sessionStorage.getItem('summaryState');
+                if (stored) {
+                    const s = JSON.parse(stored);
+                    if (s.title) currentDocTitle = s.title;
+                    if (s.source) currentSourceText = s.source;
+                    if (s.summary) currentSummaryText = s.summary;
+                    if (s.topicTitle) currentTopicTitle = s.topicTitle;
+                    const summaryContent = document.getElementById('summaryContent');
+                    const summaryTitle = document.getElementById('summaryTitle');
+                    const fileBadge = document.getElementById('fileBadge');
+                    if (summaryContent && s.summary) {
+                        summaryContent.innerHTML = window.marked ? marked.parse(s.summary) : s.summary;
+                    }
+                    if (summaryTitle) {
+                        const text = (currentTopicTitle || (s.title ? s.title.replace(/\.pdf$/i, '') : 'AI Summary'));
+                        summaryTitle.textContent = text;
+                    }
+                    if (fileBadge && s.files && s.files.length) {
+                        fileBadge.textContent = '📄 ' + s.files.join(', ');
+                    }
+                }
+            } catch (e) { /* ignore */ }
         });
     </script>
 </body>
-</html>" id="navUploadBtn" title="Upload PDFs">
-                    <div class="nav-icon">⤴️</div>
-                    <div class="nav-label">Upload</div>
-                </div>
-                <div class="nav-item
+</html>

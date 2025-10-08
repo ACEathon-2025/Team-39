@@ -386,6 +386,7 @@
             <div class="controls">
                 <button class="control-btn" id="playPauseBtn" onclick="togglePlayback()">⏸️</button>
                 <button class="control-btn" onclick="restartSlide()">🔄</button>
+                <button class="control-btn" onclick="goToScheduler()" title="Go to Scheduler">📅</button>
                 <button class="control-btn" onclick="goToIndex()" title="Back to Dashboard">📊</button>
             </div>
         </div>
@@ -718,6 +719,11 @@
             if (isPlaying) {
                 startAutoNarration();
             }
+        }
+
+        function goToScheduler() {
+            // Navigate to the scheduler
+            window.location.href = '/time';
         }
 
         function goToIndex() {
