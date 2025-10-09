@@ -55,6 +55,10 @@ def extract_json_object(text: str):
 def teacher():
     return render_template('teacher.html')
 
+@app.route('/teacherv2')
+def teacherv2():
+    return render_template('teacherv2.html')
+
 
 @app.route('/')
 def index():
@@ -324,8 +328,32 @@ def generate_schedule():
         if not exam_date:
             return jsonify({"error": "Exam date is required"}), 400
         
+        # Fallback: allow direct PDF upload (multipart/form-data)
         if not summary_text and not source_text:
-            return jsonify({"error": "No document content provided"}), 400
+            uploaded_file = None
+            if 'file' in request.files:
+                uploaded_file = request.files['file']
+            elif 'files' in request.files:
+                files_list = request.files.getlist('files')
+                uploaded_file = files_list[0] if files_list else None
+
+            if uploaded_file and uploaded_file.filename:
+                try:
+                    doc = fitz.open(stream=uploaded_file.read(), filetype="pdf")
+                    extracted = []
+                    for page in doc:
+                        extracted.append(page.get_text())
+                    source_text = "\n".join(extracted).strip()
+                except Exception as pe:
+                    return jsonify({
+                        "error": f"Failed to read uploaded PDF: {str(pe)}"
+                    }), 400
+
+        if not summary_text and not source_text:
+            return jsonify({
+                "error": "No document content provided",
+                "hint": "Pass summaryText/sourceText as JSON or upload a PDF in 'file'"
+            }), 400
         
         # Build context
         context = ""
@@ -439,7 +467,6 @@ def podcast():
     """Podcast mode page route"""
     return render_template('podcast.html')
 
-
 @app.route('/api/generate-podcast-script', methods=['POST'])
 def generate_podcast_script():
     """Generate AI-powered podcast script from document content"""
@@ -450,142 +477,51 @@ def generate_podcast_script():
         summary_text = data.get('summaryText', '')
         source_text = data.get('sourceText', '')
         duration = data.get('duration', 10)  # 10, 30, or 60 minutes
-        style = data.get('style', 'educational')  # educational, conversational, interview, storytelling
-        pace = data.get('pace', 'normal')  # slow, normal, fast
-        tone = data.get('tone', 'calm')  # enthusiastic, calm, serious, friendly
-        language = data.get('language', 'en')  # en, es, fr, de, hi
+        style = data.get('style', 'educational')
+        pace = data.get('pace', 'normal')
+        tone = data.get('tone', 'calm')
+        language = data.get('language', 'en')
         
         if not summary_text and not source_text:
             return jsonify({"error": "No document content provided"}), 400
         
-        # Build context
+        # Build context (limit size to avoid token overflow)
         context = ""
         if summary_text:
-            context += f"DOCUMENT SUMMARY:\n{summary_text}\n\n"
+            context += f"DOCUMENT SUMMARY:\n{summary_text[:2000]}\n\n"
         if source_text:
-            context += f"FULL DOCUMENT TEXT:\n{source_text}\n\n"
+            context += f"FULL DOCUMENT TEXT:\n{source_text[:2000]}\n\n"
         
-        # Style-specific instructions
-        style_instructions = {
-            'educational': {
-                'format': 'Single narrator explaining concepts clearly with examples',
-                'structure': 'Introduction → Main concepts → Key takeaways → Conclusion',
-                'voice': 'Professional, authoritative, teaching tone'
-            },
-            'conversational': {
-                'format': 'Two hosts discussing the topic in a natural, engaging dialogue',
-                'structure': 'Host A introduces → Both discuss main points → Back-and-forth Q&A → Wrap-up',
-                'voice': 'Friendly, casual, occasionally humorous'
-            },
-            'interview': {
-                'format': 'Interviewer asking questions, expert answering',
-                'structure': 'Introduction → Series of insightful questions and answers → Final thoughts',
-                'voice': 'Curious interviewer, knowledgeable expert'
-            },
-            'storytelling': {
-                'format': 'Narrative-driven explanation with story elements',
-                'structure': 'Hook/scenario → Journey through concepts → Resolution/insights',
-                'voice': 'Engaging, descriptive, narrative flow'
-            }
-        }
-        
-        # Pace adjustments
-        pace_instructions = {
-            'slow': 'Take time to explain concepts thoroughly with multiple examples. Use longer pauses.',
-            'normal': 'Balanced pace with clear explanations and relevant examples.',
-            'fast': 'Brisk pace focusing on key points and essential information. Quick transitions.'
-        }
-        
-        # Tone adjustments
-        tone_instructions = {
-            'enthusiastic': 'High energy, excited about the topic, use exclamations and positive language',
-            'calm': 'Measured, soothing delivery, professional and composed',
-            'serious': 'Formal, authoritative, focused on facts and accuracy',
-            'friendly': 'Warm, approachable, conversational and relatable'
-        }
-        
-        # Language settings
-        language_names = {
-            'en': 'English',
-            'es': 'Spanish',
-            'fr': 'French',
-            'de': 'German',
-            'hi': 'Hindi'
-        }
-        
-        selected_style = style_instructions.get(style, style_instructions['educational'])
-        
-        # Calculate word count target (average speaking rate: 150 words per minute)
+        # Calculate word count target
         target_words = duration * 150
         
-        # AI prompt for podcast script generation
+        # AI prompt - EMPHASIZE plain text output
         system_prompt = (
-            "You are an expert podcast scriptwriter who creates engaging, well-structured audio content. "
-            "Create scripts that sound natural when spoken aloud. Use conversational language. "
-            "Output ONLY the script text, no JSON, no metadata."
+            "You are an expert podcast scriptwriter. "
+            "Output ONLY the spoken script - NO JSON, NO metadata, NO code blocks. "
+            "Just write the actual words that will be spoken in the podcast."
         )
         
-        user_prompt = f"""Create a {duration}-minute podcast script from the following content:
+        user_prompt = f"""Create a {duration}-minute podcast script about this content:
 
-CONTENT TO COVER:
 {context}
 
-PODCAST SPECIFICATIONS:
-- Duration: {duration} minutes (approximately {target_words} words)
-- Style: {style} - {selected_style['format']}
-- Structure: {selected_style['structure']}
-- Voice/Tone: {tone_instructions.get(tone, tone_instructions['calm'])}
-- Pace: {pace_instructions.get(pace, pace_instructions['normal'])}
-- Language: {language_names.get(language, 'English')}
+Requirements:
+- Target length: {target_words} words
+- Style: {style}
+- Tone: {tone}
+- Pace: {pace}
 
-SCRIPT REQUIREMENTS:
+Write ONLY the podcast script (plain text). Start directly with the introduction.
+If conversational style, use:
+HOST A: [text]
+HOST B: [text]
 
-1. FORMAT FOR {style.upper()} STYLE:
-   {selected_style['format']}
+For single narrator, just write naturally without labels.
 
-2. STRUCTURE:
-   - Opening (10%): Engaging hook and introduction
-   - Main Content (75%): Core concepts from the document
-   - Closing (15%): Summary and final thoughts
+Begin the script now:"""
 
-3. WRITING STYLE:
-   - Write for the ear, not the eye (conversational, natural flow)
-   - Use short sentences and simple language
-   - Include natural transitions ("Now, let's talk about...", "Here's the interesting part...")
-   - Add verbal cues for emphasis ("This is crucial:", "Pay attention to this:")
-   - {selected_style['voice']}
-
-4. CONTENT GUIDELINES:
-   - Extract and explain key concepts from the provided content
-   - Use analogies and examples to clarify complex ideas
-   - Include relevant details but prioritize clarity
-   - Make connections between different concepts
-   - {pace_instructions.get(pace)}
-
-5. DIALOGUE FORMAT (if conversational/interview style):
-   HOST A: [dialogue]
-   HOST B: [dialogue]
-   
-   For single narrator, just write the script without labels.
-
-6. LENGTH:
-   Target approximately {target_words} words ({duration} minutes at normal speaking pace)
-
-OUTPUT REQUIREMENTS:
-- Write ONLY the podcast script
-- No metadata, no JSON formatting
-- Natural, speakable language
-- Clear section breaks with [PAUSE] where appropriate
-- Include [INTRO MUSIC], [OUTRO MUSIC] markers if relevant
-
-Write the complete {language_names.get(language, 'English')} podcast script now:"""
-
-        # Call Together AI with higher token limit for longer podcasts
-        max_tokens_map = {
-            10: 2500,
-            30: 5000,
-            60: 8000
-        }
+        max_tokens_map = {10: 2500, 30: 5000, 60: 8000}
         
         response = client.chat.completions.create(
             model="openai/gpt-oss-20b",
@@ -599,9 +535,27 @@ Write the complete {language_names.get(language, 'English')} podcast script now:
         
         script = response.choices[0].message.content.strip()
         
-        # Calculate actual word count and estimated duration
+        # Clean up any JSON/markdown formatting if AI ignored instructions
+        if script.startswith('{') or script.startswith('['):
+            try:
+                parsed = json.loads(script)
+                if isinstance(parsed, dict):
+                    script = parsed.get('script') or parsed.get('content') or str(parsed)
+            except:
+                pass
+        
+        # Remove code blocks
+        script = re.sub(r'^```(json|text)?\s*', '', script, flags=re.IGNORECASE)
+        script = re.sub(r'\s*```$', '', script)
+        script = script.strip()
+        
+        # If still looks like JSON, extract the value
+        if script.startswith('"') and script.endswith('"'):
+            script = script[1:-1]
+        
+        # Calculate stats
         word_count = len(script.split())
-        estimated_duration = round(word_count / 150, 1)  # 150 words per minute
+        estimated_duration = round(word_count / 150, 1)
         
         return jsonify({
             "script": script,
@@ -617,6 +571,7 @@ Write the complete {language_names.get(language, 'English')} podcast script now:
         })
         
     except Exception as e:
+        print(f"Podcast error: {str(e)}")
         return jsonify({"error": f"Podcast script generation failed: {str(e)}"}), 500
 
 from elevenlabs import ElevenLabs
@@ -1133,7 +1088,367 @@ def chat():
         return jsonify({"response": answer})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+@app.route('/cheatsheet')
+def cheatsheet():
+    """Ultimate Cheat Sheet page route"""
+    return render_template('cheatsheet.html')
 
+
+@app.route('/api/generate-ultimate-cheatsheet', methods=['POST'])
+def generate_ultimate_cheatsheet():
+    """Generate comprehensive, structured cheat sheet with customizable detail"""
+    try:
+        data = request.get_json(silent=True) or {}
+        
+        # Extract parameters (JSON path)
+        summary_text = data.get('summaryText', '') if isinstance(data, dict) else ''
+        source_text = data.get('sourceText', '') if isinstance(data, dict) else ''
+        detail_level = data.get('detailLevel', 5)  # 1-10 scale
+        page_count = data.get('pageCount', 3)  # Target pages
+        include_sections = data.get('includeSections', {
+            'keyTopics': True,
+            'definitions': True,
+            'formulas': True,
+            'examples': True,
+            'qa': True,
+            'quickTips': True,
+            'mnemonics': True,
+            'commonMistakes': True
+        })
+        
+        if not summary_text and not source_text:
+            return jsonify({"error": "No document content provided"}), 400
+        
+        # Build context
+        context = ""
+        if summary_text:
+            context += f"DOCUMENT SUMMARY:\n{summary_text}\n\n"
+        if source_text:
+            context += f"FULL DOCUMENT TEXT:\n{source_text}\n\n"
+        
+        # Calculate content density based on detail level and page count
+        # Rough estimate: 500 words per page at normal density
+        target_words = page_count * 500 * (detail_level / 5)
+        
+        # Detail level descriptions
+        detail_descriptions = {
+            1: "Ultra-concise, only absolute essentials",
+            2: "Very brief, key points only",
+            3: "Concise, important concepts",
+            4: "Balanced, good coverage",
+            5: "Detailed, comprehensive",
+            6: "Very detailed, thorough explanations",
+            7: "Extensive, includes nuances",
+            8: "Deep dive, rich examples",
+            9: "Exhaustive, expert-level",
+            10: "Complete mastery guide"
+        }
+        
+        # Build dynamic section instructions
+        section_specs = []
+        
+        if include_sections.get('keyTopics'):
+            topics_count = max(8, min(40, int(page_count * 3 * (detail_level / 5))))
+            section_specs.append(
+                f"**📚 Key Topics & Concepts** ({topics_count} bullets)\n"
+                f"- Organize main concepts hierarchically\n"
+                f"- Each point: topic + brief explanation{'+ example' if detail_level >= 5 else ''}\n"
+                f"- Use sub-bullets for related subtopics\n"
+            )
+        
+        if include_sections.get('definitions'):
+            def_count = max(5, min(25, int(page_count * 2 * (detail_level / 5))))
+            section_specs.append(
+                f"**📖 Essential Definitions** ({def_count} terms)\n"
+                f"- Format: **Term**: Clear, precise definition\n"
+                f"- {('Include usage context' if detail_level >= 5 else 'Brief definitions only')}\n"
+            )
+        
+        if include_sections.get('formulas'):
+            formula_count = max(3, min(15, int(page_count * 1.5 * (detail_level / 5))))
+            section_specs.append(
+                f"**🧮 Key Formulas & Equations** ({formula_count} formulas)\n"
+                f"- Show formula + what each variable means\n"
+                f"- {('Include when to use it' if detail_level >= 5 else 'Formula only')}\n"
+            )
+        
+        if include_sections.get('examples'):
+            example_count = max(3, min(12, int(page_count * 1.2 * (detail_level / 5))))
+            section_specs.append(
+                f"**💡 Worked Examples** ({example_count} examples)\n"
+                f"- Real-world or typical exam-style problems\n"
+                f"- {('Show step-by-step solution' if detail_level >= 5 else 'Brief example + answer')}\n"
+            )
+        
+        if include_sections.get('qa'):
+            qa_count = max(5, min(20, int(page_count * 2 * (detail_level / 5))))
+            section_specs.append(
+                f"**❓ Critical Questions & Answers** ({qa_count} Q&As)\n"
+                f"- High-yield questions likely to appear\n"
+                f"- {('Detailed answers with reasoning' if detail_level >= 5 else 'Concise answers')}\n"
+            )
+        
+        if include_sections.get('quickTips'):
+            tips_count = max(4, min(15, int(page_count * 1.5 * (detail_level / 5))))
+            section_specs.append(
+                f"**⚡ Quick Tips & Shortcuts** ({tips_count} tips)\n"
+                f"- Time-saving techniques\n"
+                f"- Common patterns to recognize\n"
+            )
+        
+        if include_sections.get('mnemonics'):
+            section_specs.append(
+                f"**🧠 Memory Aids & Mnemonics**\n"
+                f"- Create memorable acronyms or phrases\n"
+                f"- Visual associations for complex concepts\n"
+            )
+        
+        if include_sections.get('commonMistakes'):
+            mistake_count = max(3, min(10, int(page_count * 1 * (detail_level / 5))))
+            section_specs.append(
+                f"**⚠️ Common Mistakes to Avoid** ({mistake_count} pitfalls)\n"
+                f"- Typical errors and why they happen\n"
+                f"- How to avoid them\n"
+            )
+        
+        sections_instruction = "\n".join(section_specs)
+        
+        # AI prompt
+        system_prompt = (
+            "You are an expert academic content creator who produces exceptional study materials. "
+            "Your cheat sheets are perfectly structured, highly organized, and designed for maximum retention. "
+            "Use clear Markdown formatting with excellent visual hierarchy."
+        )
+        
+        user_prompt = f"""Create the ULTIMATE CHEAT SHEET from the following content:
+
+CONTENT:
+{context}
+
+SPECIFICATIONS:
+- Detail Level: {detail_level}/10 ({detail_descriptions.get(detail_level, 'Detailed')})
+- Target Length: ~{int(target_words)} words (approximately {page_count} pages)
+- Target Pages: {page_count}
+
+REQUIRED STRUCTURE:
+Create a comprehensive cheat sheet with these sections:
+
+{sections_instruction}
+
+FORMATTING REQUIREMENTS:
+1. Start with a clear title: # [Subject] - Ultimate Cheat Sheet
+2. Use Markdown headers (##, ###) for section organization
+3. Use bold (**text**) for key terms and emphasis
+4. Use code blocks (`) for formulas and technical terms
+5. Include blank lines between sections for readability
+6. Use bullet points and sub-bullets for hierarchical information
+7. Use numbered lists for sequential processes or steps
+8. Add horizontal rules (---) between major sections
+
+CONTENT GUIDELINES:
+- Extract and organize ALL important information from the source
+- Prioritize high-yield content (likely to appear on tests)
+- Be precise and accurate - no fluff or filler
+- {'Include detailed explanations and examples' if detail_level >= 5 else 'Keep explanations concise'}
+- {'Show step-by-step workings' if detail_level >= 6 else 'Focus on key points'}
+- Group related concepts together logically
+- Cross-reference related topics where helpful
+
+QUALITY STANDARDS:
+- Every bullet point must add value
+- Definitions must be precise and complete
+- Examples must be clear and illustrative
+- Formulas must show what variables represent
+- Tips must be actionable
+- Zero redundancy
+
+TARGET LENGTH: Aim for approximately {int(target_words)} words to fit {page_count} pages
+
+Generate the complete cheat sheet now (Markdown format):"""
+
+        # Calculate appropriate max_tokens
+        max_tokens_estimate = min(8000, int(target_words * 1.5))
+        
+        # Call Together AI
+        response = client.chat.completions.create(
+            model="openai/gpt-oss-20b",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            max_tokens=max_tokens_estimate,
+            temperature=0.4
+        )
+        
+        cheatsheet_content = response.choices[0].message.content.strip()
+        
+        # Calculate actual stats
+        word_count = len(cheatsheet_content.split())
+        estimated_pages = round(word_count / 500, 1)
+        
+        return jsonify({
+            "content": cheatsheet_content,
+            "stats": {
+                "wordCount": word_count,
+                "estimatedPages": estimated_pages,
+                "detailLevel": detail_level,
+                "requestedPages": page_count
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({"error": f"Cheat sheet generation failed: {str(e)}"}), 500
+
+
+@app.route('/api/download-ultimate-cheatsheet', methods=['POST'])
+def download_ultimate_cheatsheet():
+    """Generate and download the ultimate cheat sheet as PDF"""
+    try:
+        data = request.get_json(silent=True) or {}
+        title = data.get('title', 'Ultimate Cheat Sheet')
+        content = data.get('content', '')
+        
+        if not content:
+            return jsonify({"error": "No content provided"}), 400
+        
+        # Create PDF in memory with better formatting
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            buffer, 
+            pagesize=letter,
+            topMargin=0.75*inch, 
+            bottomMargin=0.75*inch,
+            leftMargin=0.75*inch, 
+            rightMargin=0.75*inch
+        )
+        
+        # Enhanced styles
+        styles = getSampleStyleSheet()
+        
+        title_style = ParagraphStyle(
+            'CheatSheetTitle',
+            parent=styles['Heading1'],
+            fontSize=22,
+            textColor='#1e40af',
+            spaceAfter=20,
+            spaceBefore=10,
+            alignment=TA_LEFT,
+            fontName='Helvetica-Bold'
+        )
+        
+        heading2_style = ParagraphStyle(
+            'CheatSheetH2',
+            parent=styles['Heading2'],
+            fontSize=16,
+            textColor='#2563eb',
+            spaceAfter=12,
+            spaceBefore=16,
+            fontName='Helvetica-Bold'
+        )
+        
+        heading3_style = ParagraphStyle(
+            'CheatSheetH3',
+            parent=styles['Heading3'],
+            fontSize=13,
+            textColor='#3b82f6',
+            spaceAfter=8,
+            spaceBefore=12,
+            fontName='Helvetica-Bold'
+        )
+        
+        body_style = ParagraphStyle(
+            'CheatSheetBody',
+            parent=styles['BodyText'],
+            fontSize=10,
+            leading=14,
+            spaceAfter=6,
+            fontName='Helvetica'
+        )
+        
+        bullet_style = ParagraphStyle(
+            'CheatSheetBullet',
+            parent=styles['BodyText'],
+            fontSize=10,
+            leading=13,
+            spaceAfter=4,
+            leftIndent=20,
+            fontName='Helvetica'
+        )
+        
+        # Build PDF content
+        story = []
+        
+        # Helpers for safe inline formatting
+        import re
+        from xml.sax.saxutils import escape as xml_escape
+
+        def clean_inline(text: str) -> str:
+            # Escape HTML entities first
+            text = xml_escape(text)
+            # Bold: **text** -> <b>text</b>
+            text = re.sub(r"\*\*(.*?)\*\*", r"<b>\1</b>", text)
+            # Inline code: `code` -> <font face="Courier">code</font>
+            text = re.sub(r"`([^`]+)`", r"<font face=\"Courier\">\1</font>", text)
+            return text
+
+        # Parse markdown-like content
+        lines = content.split('\n')
+        for line in lines:
+            line = line.strip()
+            
+            if not line:
+                story.append(Spacer(1, 0.1*inch))
+                continue
+            
+            # Headers
+            if line.startswith('# '):
+                text = clean_inline(line[2:].strip())
+                story.append(Paragraph(text, title_style))
+            elif line.startswith('## '):
+                text = clean_inline(line[3:].strip())
+                story.append(Paragraph(text, heading2_style))
+            elif line.startswith('### '):
+                text = clean_inline(line[4:].strip())
+                story.append(Paragraph(text, heading3_style))
+            # Bullets
+            elif line.startswith('- ') or line.startswith('* '):
+                text = clean_inline(line[2:].strip())
+                story.append(Paragraph(f"• {text}", bullet_style))
+            # Numbered lists
+            elif len(line) > 2 and line[0].isdigit() and line[1:3] in ['. ', ') ']:
+                # Keep the original index, clean the rest
+                try:
+                    idx_end = line.index(' ')
+                except ValueError:
+                    idx_end = 2
+                prefix = xml_escape(line[:idx_end])
+                text = clean_inline(line[idx_end+1:].strip())
+                story.append(Paragraph(f"{prefix} {text}", bullet_style))
+            # Horizontal rules
+            elif line.startswith('---'):
+                story.append(Spacer(1, 0.15*inch))
+            # Regular paragraphs
+            else:
+                text = clean_inline(line)
+                story.append(Paragraph(text, body_style))
+        
+        # Build PDF
+        doc.build(story)
+        buffer.seek(0)
+        
+        # Generate filename
+        safe_title = re.sub(r'[^\w\s-]', '', title).strip().replace(' ', '_')
+        filename = f'{safe_title}_CheatSheet.pdf'
+        
+        return send_file(
+            buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        return jsonify({"error": f"PDF generation failed: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

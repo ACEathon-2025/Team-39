@@ -726,96 +726,17 @@
             document.getElementById('progressText').textContent = text;
         }
 
-        async function generateLecture() {
-            if (isGenerating) return;
-            
+        function generateLecture() {
             const summaryText = document.getElementById('summaryInput').value.trim();
-            const slideCount = parseInt(document.getElementById('slideCount').value);
-            const teachingStyle = document.getElementById('teachingStyle').value;
-            const voiceId = document.getElementById('voiceSelect').value;
-            
             if (!summaryText) {
                 showError('Please enter a topic or summary text');
                 return;
             }
-            
-            isGenerating = true;
-            document.getElementById('confirmGenBtn').disabled = true;
-            document.getElementById('generationProgress').style.display = 'block';
-            document.getElementById('errorMessage').style.display = 'none';
-            
-            try {
-                updateProgress(10, 'Analyzing content...');
-                
-                console.log('Generating slides...');
-                const slideResponse = await fetch('/api/generate-professor-slides', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        summaryText: summaryText,
-                        slideCount: slideCount,
-                        teachingStyle: teachingStyle
-                    })
-                });
-                
-                if (!slideResponse.ok) {
-                    const errorData = await slideResponse.json();
-                    throw new Error(errorData.error || 'Failed to generate slides');
-                }
-                
-                slideData = await slideResponse.json();
-                console.log('Slides generated:', slideData);
-                updateProgress(40, 'Creating teaching script...');
-                
-                console.log('Generating audio...');
-                const audioResponse = await fetch('/api/generate-professor-audio', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        slides: slideData.slides,
-                        voiceId: voiceId,
-                        teachingStyle: teachingStyle
-                    })
-                });
-                
-                if (!audioResponse.ok) {
-                    const errorData = await audioResponse.json();
-                    throw new Error(errorData.error || 'Failed to generate audio');
-                }
-                
-                const audioData = await audioResponse.json();
-                console.log('Audio generated:', audioData);
-                updateProgress(80, 'Preparing presentation...');
-                
-                buildSlidesFromData(slideData.slides);
-                
-                audioPlayer = document.getElementById('audioPlayer');
-                audioPlayer.src = audioData.audioUrl;
-                audioPlayer.load();
-                
-                slideData.timestamps = audioData.timestamps;
-                
-                updateProgress(100, 'Lecture ready!');
-                
-                setTimeout(() => {
-                    closeGenerateModal();
-                    totalSlides = slideData.slides.length;
-                    currentSlide = 0;
-                    document.getElementById('playPauseBtn').disabled = false;
-                    document.getElementById('restartBtn').disabled = false;
-                    document.getElementById('prevBtn').disabled = false;
-                    document.getElementById('nextBtn').disabled = false;
-                    showSlide(0);
-                    setupAudioSync(audioData.timestamps);
-                }, 500);
-                
-            } catch (error) {
-                console.error('Generation error:', error);
-                showError('Generation failed: ' + error.message);
-            } finally {
-                isGenerating = false;
-                document.getElementById('confirmGenBtn').disabled = false;
-            }
+            // Persist the summary for potential use in teacherv2 (if needed later)
+            sessionStorage.setItem('currentSummary', summaryText);
+            closeGenerateModal();
+            // No backend calls; go directly to the static Teacher V2 page
+            window.location.href = '/teacherv2';
         }
 
         function buildSlidesFromData(slides) {
