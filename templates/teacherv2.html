@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OuchMyBrain.io - Teacher Mode</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
+                linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 30%, #16213e 70%, #0f3460 100%);
+            min-height: 100vh;
+            color: #ffffff;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .presentation-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            padding: 1rem 2rem;
+            background: rgba(10, 10, 10, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00d4ff 0%, #9945ff 50%, #ff6496 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .slide-counter {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 1rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .slide-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 3rem;
+            display: flex;
+            opacity: 0;
+            transform: translateX(100px);
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            background: rgba(15, 23, 42, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .slide.prev {
+            transform: translateX(-100px);
+        }
+
+        .content-area {
+            flex: 1;
+            max-width: 60%;
+            padding-right: 3rem;
+        }
+
+        .visual-area {
+            flex: 1;
+            max-width: 40%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .slide-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 2rem;
+            color: #ffffff;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            line-height: 1.2;
+            z-index: 10;
+            position: relative;
+        }
+
+        .slide-content {
+            font-size: 1.8rem;
+            line-height: 1.9;
+            color: rgba(255, 255, 255, 0.95);
+            font-weight: 400;
+        }
+
+        .slide-content .sentence {
+            transition: all 0.3s ease;
+            padding: 0.2rem 0;
+            border-radius: 0.25rem;
+            display: inline;
+        }
+
+        .slide-content .sentence.highlighted {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(153, 69, 255, 0.2));
+            color: #ffffff;
+            font-weight: 500;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .visual-element {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 2rem;
+            padding: 2rem;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            margin-bottom: 2rem;
+            transition: all 0.5s ease;
+            transform: translateY(20px);
+            opacity: 0;
+        }
+
+        .visual-element.animate {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .visual-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .visual-title {
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #ffffff;
+        }
+
+        .visual-description {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.2rem;
+            line-height: 1.6;
+        }
+
+        .progress-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #00d4ff, #9945ff);
+            transition: width 0.3s ease;
+            z-index: 10;
+        }
+
+        .navigation {
+            position: absolute;
+            bottom: 2rem;
+            right: 3rem;
+            display: flex;
+            gap: 1rem;
+            z-index: 50;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.5rem;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 212, 255, 0.3);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .speaking-indicator {
+            position: fixed;
+            top: 50%;
+            left: 2rem;
+            transform: translateY(-50%);
+            background: rgba(0, 212, 255, 0.2);
+            border: 1px solid rgba(0, 212, 255, 0.5);
+            border-radius: 1rem;
+            padding: 1rem;
+            display: none;
+            backdrop-filter: blur(20px);
+        }
+
+        .speaking-indicator.active {
+            display: block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translateY(-50%) scale(1); opacity: 0.8; }
+            50% { transform: translateY(-50%) scale(1.05); opacity: 1; }
+        }
+
+        .example-box {
+            background: linear-gradient(135deg, rgba(0, 255, 150, 0.1), rgba(0, 212, 255, 0.1));
+            border: 1px solid rgba(0, 255, 150, 0.3);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            transform: translateX(-20px);
+            opacity: 0;
+            transition: all 0.5s ease;
+        }
+
+        .example-box.animate {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .example-title {
+            font-weight: 600;
+            color: #00ff96;
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+        }
+
+        .example-box {
+            background: linear-gradient(135deg, rgba(0, 255, 150, 0.1), rgba(0, 212, 255, 0.1));
+            border: 1px solid rgba(0, 255, 150, 0.3);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            transform: translateX(-20px);
+            opacity: 0;
+            transition: all 0.5s ease;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .floating-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(0, 212, 255, 0.6);
+            border-radius: 50%;
+            animation: float 6s linear infinite;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) translateX(0px);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-10px) translateX(100px);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .slide {
+                flex-direction: column;
+                padding: 2rem 1rem;
+            }
+            
+            .content-area {
+                max-width: 100%;
+                padding-right: 0;
+                margin-bottom: 2rem;
+            }
+            
+            .visual-area {
+                max-width: 100%;
+            }
+            
+            .slide-title {
+                font-size: 2rem;
+            }
+            
+            .slide-content {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-particles" id="particles"></div>
+    <div class="speaking-indicator" id="speakingIndicator">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            🎤 <span>Speaking...</span>
+        </div>
+    </div>
+
+    <div class="presentation-container">
+        <div class="header">
+            <div class="logo">🎓 Professor Mode</div>
+            <div class="slide-counter" id="slideCounter">1 / 5</div>
+            <div class="controls">
+                <button class="control-btn" id="playPauseBtn" onclick="togglePlayback()">⏸️</button>
+                <button class="control-btn" onclick="restartSlide()">🔄</button>
+                <button class="control-btn" onclick="goToScheduler()" title="Go to Scheduler">📅</button>
+                <button class="control-btn" onclick="goToIndex()" title="Back to Dashboard">📊</button>
+            </div>
+        </div>
+
+        <div class="slide-container">
+            <!-- Slide 1: Introduction -->
+            <div class="slide active" data-slide="0">
+                <div class="content-area">
+                    <h1 class="slide-title">Machine Learning Fundamentals</h1>
+                    <div class="slide-content" id="content-0">
+                        <span class="sentence">Welcome to our comprehensive study of Machine Learning!</span>
+                        <span class="sentence">Today we'll explore the core concepts that power artificial intelligence.</span>
+                        <span class="sentence">Machine learning is a subset of artificial intelligence that enables computers to learn and improve from experience without being explicitly programmed.</span>
+                        <span class="sentence">Think of it as teaching a computer to recognize patterns, just like how you learned to recognize faces or understand language.</span>
+                    </div>
+                </div>
+                <div class="visual-area">
+                    <div class="visual-element">
+                        <span class="visual-icon">🤖</span>
+                        <div class="visual-title">Artificial Intelligence</div>
+                        <div class="visual-description">The broad field of creating intelligent machines</div>
+                    </div>
+                    <div class="visual-element">
+                        <span class="visual-icon">🧠</span>
+                        <div class="visual-title">Machine Learning</div>
+                        <div class="visual-description">A subset that learns from data</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2: Types of Learning -->
+            <div class="slide" data-slide="1">
+                <div class="content-area">
+                    <h1 class="slide-title">Types of Machine Learning</h1>
+                    <div class="slide-content" id="content-1">
+                        <span class="sentence">There are three main types of machine learning approaches.</span>
+                        <span class="sentence">Supervised Learning uses labeled data to train models, like teaching with examples and correct answers.</span>
+                        <span class="sentence">Unsupervised Learning finds hidden patterns in data without labels, like discovering customer groups from purchase behavior.</span>
+                        <span class="sentence">Reinforcement Learning learns through trial and error, receiving rewards for good actions and penalties for bad ones.</span>
+                    </div>
+                    <div class="example-box">
+                        <div class="example-title">🎯 Example: Email Classification</div>
+                        <div>Supervised learning can classify emails as spam or not spam using thousands of pre-labeled examples.</div>
+                    </div>
+                </div>
+                <div class="visual-area">
+                    <div class="visual-element">
+                        <span class="visual-icon">👨‍🏫</span>
+                        <div class="visual-title">Supervised</div>
+                        <div class="visual-description">Learning with a teacher</div>
+                    </div>
+                    <div class="visual-element">
+                        <span class="visual-icon">🔍</span>
+                        <div class="visual-title">Unsupervised</div>
+                        <div class="visual-description">Finding hidden patterns</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3: Neural Networks -->
+            <div class="slide" data-slide="2">
+                <div class="content-area">
+                    <h1 class="slide-title">Neural Networks</h1>
+                    <div class="slide-content" id="content-2">
+                        <span class="sentence">Neural networks are inspired by how the human brain processes information.</span>
+                        <span class="sentence">They consist of interconnected nodes called neurons that process and transmit information.</span>
+                        <span class="sentence">Each connection has a weight that determines how much influence one neuron has on another.</span>
+                        <span class="sentence">Through training, these weights adjust to recognize patterns and make accurate predictions.</span>
+                    </div>
+                    <div class="example-box">
+                        <div class="example-title">🧮 Mathematical Foundation</div>
+                        <div>Each neuron applies: Output = Activation(Σ(input × weight) + bias)</div>
+                    </div>
+                </div>
+                <div class="visual-area">
+                    <div class="visual-element">
+                        <span class="visual-icon">🕸️</span>
+                        <div class="visual-title">Network Structure</div>
+                        <div class="visual-description">Layers of interconnected nodes</div>
+                    </div>
+                    <div class="visual-element">
+                        <span class="visual-icon">⚡</span>
+                        <div class="visual-title">Activation Functions</div>
+                        <div class="visual-description">Control signal flow</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: Training Process -->
+            <div class="slide" data-slide="3">
+                <div class="content-area">
+                    <h1 class="slide-title">Training Process</h1>
+                    <div class="slide-content" id="content-3">
+                        <span class="sentence">Training a machine learning model is like teaching a student through practice and feedback.</span>
+                        <span class="sentence">We feed the model training data and compare its predictions to the correct answers.</span>
+                        <span class="sentence">The model calculates its error and adjusts its internal parameters to improve accuracy.</span>
+                        <span class="sentence">This process repeats thousands of times until the model achieves satisfactory performance.</span>
+                    </div>
+                    <div class="example-box">
+                        <div class="example-title">🔄 Training Steps</div>
+                        <div>1. Forward pass → 2. Calculate error → 3. Backward pass → 4. Update weights → Repeat</div>
+                    </div>
+                </div>
+                <div class="visual-area">
+                    <div class="visual-element">
+                        <span class="visual-icon">📊</span>
+                        <div class="visual-title">Loss Function</div>
+                        <div class="visual-description">Measures prediction errors</div>
+                    </div>
+                    <div class="visual-element">
+                        <span class="visual-icon">🎯</span>
+                        <div class="visual-title">Optimization</div>
+                        <div class="visual-description">Improves model accuracy</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 5: Applications -->
+            <div class="slide" data-slide="4">
+                <div class="content-area">
+                    <h1 class="slide-title">Real-World Applications</h1>
+                    <div class="slide-content" id="content-4">
+                        <span class="sentence">Machine learning powers many technologies we use daily.</span>
+                        <span class="sentence">Recommendation systems suggest movies on Netflix or products on Amazon based on your preferences.</span>
+                        <span class="sentence">Computer vision enables autonomous vehicles to recognize traffic signs and pedestrians.</span>
+                        <span class="sentence">Natural language processing allows virtual assistants to understand and respond to human speech.</span>
+                    </div>
+                    <div class="example-box">
+                        <div class="example-title">🌟 Future Possibilities</div>
+                        <div>Healthcare diagnosis, climate modeling, drug discovery, and personalized education are emerging frontiers.</div>
+                    </div>
+                </div>
+                <div class="visual-area">
+                    <div class="visual-element">
+                        <span class="visual-icon">🚗</span>
+                        <div class="visual-title">Autonomous Vehicles</div>
+                        <div class="visual-description">Self-driving cars</div>
+                    </div>
+                    <div class="visual-element">
+                        <span class="visual-icon">🏥</span>
+                        <div class="visual-title">Healthcare</div>
+                        <div class="visual-description">Medical diagnosis & treatment</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-bar" id="progressBar"></div>
+        
+        <div class="navigation">
+            <button class="nav-btn" id="prevBtn" onclick="previousSlide()" disabled>‹</button>
+            <button class="nav-btn" id="nextBtn" onclick="nextSlide()">›</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        let currentSentence = 0;
+        let isPlaying = true;
+        let speakingInterval;
+        let autoPlayInterval;
+        const totalSlides = 5;
+        const sentenceDuration = 2000; // 2 seconds per sentence
+
+        // Initialize particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        function updateSlideCounter() {
+            document.getElementById('slideCounter').textContent = `${currentSlide + 1} / ${totalSlides}`;
+        }
+
+        function updateProgressBar() {
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function updateNavigationButtons() {
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function animateVisualElements() {
+            const currentSlideElement = document.querySelector(`[data-slide="${currentSlide}"]`);
+            const visualElements = currentSlideElement.querySelectorAll('.visual-element');
+            const exampleBoxes = currentSlideElement.querySelectorAll('.example-box');
+            
+            setTimeout(() => {
+                visualElements.forEach((element, index) => {
+                    setTimeout(() => {
+                        element.classList.add('animate');
+                    }, index * 200);
+                });
+                
+                exampleBoxes.forEach((box, index) => {
+                    setTimeout(() => {
+                        box.classList.add('animate');
+                    }, (visualElements.length + index) * 200 + 600);
+                });
+            }, 300);
+        }
+
+        function highlightSentence(slideIndex, sentenceIndex) {
+            const content = document.getElementById(`content-${slideIndex}`);
+            const sentences = content.querySelectorAll('.sentence');
+            
+            // Clear all highlights
+            sentences.forEach(sentence => {
+                sentence.classList.remove('highlighted');
+            });
+            
+            // Highlight current sentence
+            if (sentences[sentenceIndex]) {
+                sentences[sentenceIndex].classList.add('highlighted');
+                
+                // Show speaking indicator
+                document.getElementById('speakingIndicator').classList.add('active');
+                
+                // Hide speaking indicator after sentence duration
+                setTimeout(() => {
+                    document.getElementById('speakingIndicator').classList.remove('active');
+                }, sentenceDuration - 500);
+            }
+        }
+
+        function startAutoNarration() {
+            if (!isPlaying) return;
+            
+            const currentSlideElement = document.querySelector(`[data-slide="${currentSlide}"]`);
+            const sentences = currentSlideElement.querySelectorAll('.sentence');
+            
+            if (currentSentence < sentences.length) {
+                highlightSentence(currentSlide, currentSentence);
+                currentSentence++;
+                
+                autoPlayInterval = setTimeout(() => {
+                    startAutoNarration();
+                }, sentenceDuration);
+            } else {
+                // Slide finished, pause or go to next
+                setTimeout(() => {
+                    if (currentSlide < totalSlides - 1 && isPlaying) {
+                        nextSlide();
+                    }
+                }, 1000);
+            }
+        }
+
+        function showSlide(slideIndex) {
+            // Hide all slides
+            document.querySelectorAll('.slide').forEach((slide, index) => {
+                slide.classList.remove('active', 'prev');
+                if (index < slideIndex) {
+                    slide.classList.add('prev');
+                }
+            });
+            
+            // Show current slide
+            document.querySelector(`[data-slide="${slideIndex}"]`).classList.add('active');
+            
+            // Reset sentence highlighting
+            currentSentence = 0;
+            clearTimeout(autoPlayInterval);
+            
+            // Clear all visual animations
+            document.querySelectorAll('.visual-element, .example-box').forEach(el => {
+                el.classList.remove('animate');
+            });
+            
+            // Update UI
+            updateSlideCounter();
+            updateProgressBar();
+            updateNavigationButtons();
+            
+            // Start animations and narration
+            animateVisualElements();
+            setTimeout(() => {
+                if (isPlaying) {
+                    startAutoNarration();
+                }
+            }, 1000);
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                showSlide(currentSlide);
+            }
+        }
+
+        function previousSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                showSlide(currentSlide);
+            }
+        }
+
+        function togglePlayback() {
+            isPlaying = !isPlaying;
+            const btn = document.getElementById('playPauseBtn');
+            
+            if (isPlaying) {
+                btn.textContent = '⏸️';
+                startAutoNarration();
+            } else {
+                btn.textContent = '▶️';
+                clearTimeout(autoPlayInterval);
+                document.getElementById('speakingIndicator').classList.remove('active');
+            }
+        }
+
+        function restartSlide() {
+            currentSentence = 0;
+            clearTimeout(autoPlayInterval);
+            
+            // Clear highlights
+            document.querySelectorAll('.sentence').forEach(sentence => {
+                sentence.classList.remove('highlighted');
+            });
+            
+            if (isPlaying) {
+                startAutoNarration();
+            }
+        }
+
+        function goToScheduler() {
+            // Navigate to the scheduler
+            window.location.href = '/time';
+        }
+
+        function goToIndex() {
+            // Navigate back to the index dashboard
+            window.location.href = '/';
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                previousSlide();
+            } else if (e.key === 'r') {
+                restartSlide();
+            } else if (e.key === 'p') {
+                togglePlayback();
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            showSlide(0);
+        });
+    </script>
+</body>
+</html>

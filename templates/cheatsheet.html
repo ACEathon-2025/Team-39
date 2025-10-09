@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Cheat Sheet Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            color: #ffffff; 
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeIn 0.6s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #9945ff 0%, #00d4ff 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 2rem;
+            animation: slideIn 0.6s ease;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .control-panel {
+            background: rgba(15, 20, 30, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            backdrop-filter: blur(20px);
+            height: fit-content;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        
+        .control-section {
+            margin-bottom: 2rem;
+        }
+        
+        .control-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #00d4ff;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .slider-container {
+            margin-bottom: 1.5rem;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .slider-value {
+            background: rgba(153, 69, 255, 0.3);
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-weight: 600;
+            color: #9945ff;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #9945ff, #00d4ff);
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(153, 69, 255, 0.5);
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #9945ff, #00d4ff);
+            cursor: pointer;
+            border: none;
+        }
+        
+        .checkbox-group {
+            display: grid;
+            gap: 0.75rem;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .checkbox-item:hover {
+            background: rgba(153, 69, 255, 0.2);
+        }
+        
+        .checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #9945ff;
+        }
+        
+        .checkbox-item label {
+            flex: 1;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #9945ff, #00d4ff);
+            color: white;
+            box-shadow: 0 4px 15px rgba(153, 69, 255, 0.4);
+            margin-bottom: 1rem;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(153, 69, 255, 0.6);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .preview-panel {
+            background: rgba(15, 20, 30, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 1.5rem;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 250px);
+        }
+        
+        .preview-header {
+            background: linear-gradient(135deg, rgba(153, 69, 255, 0.2), rgba(0, 212, 255, 0.2));
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .preview-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #00d4ff;
+        }
+        
+        .preview-stats {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+        }
+        
+        .preview-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2.5rem;
+        }
+        
+        .preview-content::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        .preview-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .preview-content::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #9945ff, #00d4ff);
+            border-radius: 5px;
+        }
+        
+        .content {
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .content h1 {
+            font-size: 2.5rem;
+            margin: 2rem 0 1.5rem 0;
+            background: linear-gradient(135deg, #9945ff 0%, #00d4ff 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+        
+        .content h2 {
+            font-size: 1.8rem;
+            margin: 2rem 0 1rem 0;
+            color: #00d4ff;
+            font-weight: 600;
+            border-bottom: 2px solid rgba(0, 212, 255, 0.3);
+            padding-bottom: 0.5rem;
+        }
+        
+        .content h3 {
+            font-size: 1.3rem;
+            margin: 1.5rem 0 0.75rem 0;
+            color: #9945ff;
+            font-weight: 600;
+        }
+        
+        .content p {
+            margin: 1rem 0;
+            color: rgba(255, 255, 255, 0.85);
+        }
+        
+        .content ul, .content ol {
+            margin: 1rem 0 1rem 1.5rem;
+        }
+        
+        .content li {
+            margin: 0.5rem 0;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .content strong {
+            color: #00d4ff;
+            font-weight: 600;
+        }
+        
+        .content code {
+            background: rgba(153, 69, 255, 0.2);
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.5rem;
+            font-family: 'Courier New', monospace;
+            color: #9945ff;
+        }
+        
+        .content hr {
+            border: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            margin: 2rem 0;
+        }
+        
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            padding: 3rem;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(153, 69, 255, 0.2);
+            border-top-color: #9945ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .error {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            text-align: center;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-panel {
+                max-width: 600px;
+                margin: 0 auto;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .preview-content {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Ultimate Cheat Sheet Generator</h1>
+            <p>Create comprehensive, structured study materials with customizable detail</p>
+        </div>
+        
+        <div class="main-grid">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <div class="control-section">
+                    <div class="section-title">📊 Detail Settings</div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Detail Level</span>
+                            <span class="slider-value" id="detailValue">5 - Detailed</span>
+                        </div>
+                        <input type="range" min="1" max="10" value="5" class="slider" id="detailSlider">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Target Pages</span>
+                            <span class="slider-value" id="pagesValue">3 pages</span>
+                        </div>
+                        <input type="range" min="1" max="10" value="3" class="slider" id="pagesSlider">
+                    </div>
+                </div>
+                
+                <div class="control-section">
+                    <div class="section-title">📋 Include Sections</div>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="keyTopics" checked>
+                            <label for="keyTopics">📚 Key Topics & Concepts</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="definitions" checked>
+                            <label for="definitions">📖 Essential Definitions</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="formulas" checked>
+                            <label for="formulas">🧮 Formulas & Equations</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="examples" checked>
+                            <label for="examples">💡 Worked Examples</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="qa" checked>
+                            <label for="qa">❓ Critical Q&A</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="quickTips" checked>
+                            <label for="quickTips">⚡ Quick Tips & Shortcuts</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="mnemonics" checked>
+                            <label for="mnemonics">🧠 Memory Aids</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="commonMistakes" checked>
+                            <label for="commonMistakes">⚠️ Common Mistakes</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" id="generateBtn">
+                    <span>✨</span>
+                    <span>Generate Cheat Sheet</span>
+                </button>
+                
+                <button class="btn btn-secondary hidden" id="downloadBtn">
+                    <span>📥</span>
+                    <span>Download PDF</span>
+                </button>
+                
+                <button class="btn btn-secondary" onclick="window.location.href='/'">
+                    <span>🏠</span>
+                    <span>Back to Home</span>
+                </button>
+            </div>
+            
+            <!-- Preview Panel -->
+            <div class="preview-panel">
+                <div class="preview-header">
+                    <div class="preview-title">📄 Preview</div>
+                    <div class="preview-stats hidden" id="stats">
+                        <div class="stat-item">
+                            <span id="wordCount">0 words</span>
+                        </div>
+                        <div class="stat-item">
+                            <span id="pageCount">0 pages</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="preview-content">
+                    <div class="empty-state" id="emptyState">
+                        <div class="empty-state-icon">📝</div>
+                        <p>Configure your settings and click "Generate Cheat Sheet" to begin</p>
+                    </div>
+                    <div id="content" class="content hidden"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Detail level descriptions
+        const detailLevels = {
+            1: "Ultra-concise",
+            2: "Very brief",
+            3: "Concise",
+            4: "Balanced",
+            5: "Detailed",
+            6: "Very detailed",
+            7: "Extensive",
+            8: "Deep dive",
+            9: "Exhaustive",
+            10: "Complete mastery"
+        };
+        
+        // Update slider displays
+        const detailSlider = document.getElementById('detailSlider');
+        const detailValue = document.getElementById('detailValue');
+        const pagesSlider = document.getElementById('pagesSlider');
+        const pagesValue = document.getElementById('pagesValue');
+        
+        detailSlider.addEventListener('input', (e) => {
+            const value = e.target.value;
+            detailValue.textContent = `${value} - ${detailLevels[value]}`;
+        });
+        
+        pagesSlider.addEventListener('input', (e) => {
+            const value = e.target.value;
+            pagesValue.textContent = `${value} page${value > 1 ? 's' : ''}`;
+        });
+        
+        // Store generated content
+        let generatedContent = '';
+        let generatedTitle = 'Ultimate_Cheat_Sheet';
+        
+        // Generate cheat sheet
+        document.getElementById('generateBtn').addEventListener('click', async () => {
+            const generateBtn = document.getElementById('generateBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const emptyState = document.getElementById('emptyState');
+            const content = document.getElementById('content');
+            const stats = document.getElementById('stats');
+            
+            // Get settings
+            const detailLevel = parseInt(detailSlider.value);
+            const pageCount = parseInt(pagesSlider.value);
+            
+            const includeSections = {
+                keyTopics: document.getElementById('keyTopics').checked,
+                definitions: document.getElementById('definitions').checked,
+                formulas: document.getElementById('formulas').checked,
+                examples: document.getElementById('examples').checked,
+                qa: document.getElementById('qa').checked,
+                quickTips: document.getElementById('quickTips').checked,
+                mnemonics: document.getElementById('mnemonics').checked,
+                commonMistakes: document.getElementById('commonMistakes').checked
+            };
+            
+            // Get stored document data
+            const stored = sessionStorage.getItem('smartInput');
+            if (!stored) {
+                content.innerHTML = '<div class="error">No document data found. Please upload a PDF first from the home page.</div>';
+                emptyState.classList.add('hidden');
+                content.classList.remove('hidden');
+                return;
+            }
+            
+            const payload = JSON.parse(stored);
+            generatedTitle = payload.title || 'Document';
+            
+            // Show loading
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<span>⏳</span><span>Generating...</span>';
+            emptyState.classList.add('hidden');
+            content.classList.remove('hidden');
+            downloadBtn.classList.add('hidden');
+            stats.classList.add('hidden');
+            content.innerHTML = '<div class="loading"><div class="spinner"></div><p>Creating your ultimate cheat sheet...</p></div>';
+            
+            try {
+                const response = await fetch('/api/generate-ultimate-cheatsheet', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        summaryText: payload.text || '',
+                        sourceText: payload.source_text || '',
+                        detailLevel: detailLevel,
+                        pageCount: pageCount,
+                        includeSections: includeSections
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Generation failed');
+                }
+                
+                // Store content for download
+                generatedContent = data.content;
+                
+                // Render content
+                content.innerHTML = marked.parse(data.content);
+                
+                // Update stats
+                document.getElementById('wordCount').textContent = `${data.stats.wordCount} words`;
+                document.getElementById('pageCount').textContent = `~${data.stats.estimatedPages} pages`;
+                stats.classList.remove('hidden');
+                
+                // Show download button
+                downloadBtn.classList.remove('hidden');
+                
+            } catch (error) {
+                content.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<span>✨</span><span>Generate Cheat Sheet</span>';
+            }
+        });
+        
+        // Download PDF
+        document.getElementById('downloadBtn').addEventListener('click', async () => {
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            if (!generatedContent) {
+                alert('No content to download. Please generate a cheat sheet first.');
+                return;
+            }
+            
+            downloadBtn.disabled = true;
+            downloadBtn.innerHTML = '<span>⏳</span><span>Preparing PDF...</span>';
+            
+            try {
+                const response = await fetch('/api/download-ultimate-cheatsheet', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: generatedTitle,
+                        content: generatedContent
+                    })
+                });
+                
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Download failed');
+                }
+                
+                // Download the PDF
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${generatedTitle.replace(/\s+/g, '_')}_CheatSheet.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+            } catch (error) {
+                alert(`Download failed: ${error.message}`);
+            } finally {
+                downloadBtn.disabled = false;
+                downloadBtn.innerHTML = '<span>📥</span><span>Download PDF</span>';
+            }
+        });
+        
+        // Check for document data on load
+        window.addEventListener('DOMContentLoaded', () => {
+            const stored = sessionStorage.getItem('smartInput');
+            if (!stored) {
+                document.getElementById('content').innerHTML = 
+                    '<div class="error">No document data found. Please <a href="/" style="color: #00d4ff; text-decoration: underline;">upload a PDF</a> first.</div>';
+                document.getElementById('emptyState').classList.add('hidden');
+                document.getElementById('content').classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
