@@ -12,6 +12,7 @@ from io import BytesIO
 import re
 import json
 from datetime import datetime, timedelta
+from gtts import gTTS
 
 
 app = Flask(__name__)
@@ -19,9 +20,36 @@ load_dotenv()
 
 # ✅ Load Together API key from .env
 TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
+# ✅ Load ElevenLabs API key (used in conditionals and client init)
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 
 # ✅ Initialize Together client
 client = Together(api_key=TOGETHER_API_KEY)
+
+def extract_json_object(text: str):
+    """Best-effort extraction of the first top-level JSON object from a text blob."""
+    if not text:
+        return None
+    # Remove common code fences
+    cleaned = re.sub(r'^```json\s*', '', text.strip(), flags=re.IGNORECASE)
+    cleaned = re.sub(r'^```\s*', '', cleaned)
+    cleaned = re.sub(r'```\s*$', '', cleaned)
+    cleaned = cleaned.strip()
+    # Find first '{' and last '}' to isolate an object
+    start = cleaned.find('{')
+    end = cleaned.rfind('}')
+    if start == -1 or end == -1 or end <= start:
+        return None
+    candidate = cleaned[start:end+1]
+    try:
+        return json.loads(candidate)
+    except Exception:
+        # Last resort: remove trailing commas
+        candidate2 = re.sub(r',\s*([}\]])', r'\1', candidate)
+        try:
+            return json.loads(candidate2)
+        except Exception:
+            return None
 
 @app.route('/teacher')
 def teacher():
@@ -37,6 +65,245 @@ def index():
 def time():
     return render_template('time.html')
 
+
+@app.route('/api/generate-professor-slides', methods=['POST'])
+def generate_professor_slides():
+    """Generate AI-powered teaching slides with deep, detailed content"""
+    try:
+        data = request.get_json(silent=True) or {}
+        
+        summary_text = data.get('summaryText', '')
+        slide_count = data.get('slideCount', 5)
+        teaching_style = data.get('teachingStyle', 'comprehensive')
+        
+        if not summary_text:
+            return jsonify({"error": "No content provided"}), 400
+        
+        # Teaching style configurations
+        style_configs = {
+            'comprehensive': {
+                'approach': 'Provide thorough explanations with multiple examples, analogies, and step-by-step breakdowns',
+                'depth': 'Deep dive into concepts with historical context, practical applications, and theoretical foundations',
+                'tone': 'Academic but accessible, like a passionate university professor'
+            },
+            'storytelling': {
+                'approach': 'Frame concepts as narratives with characters, conflicts, and resolutions',
+                'depth': 'Use real-world scenarios, case studies, and journey-based explanations',
+                'tone': 'Engaging and dramatic, building anticipation and excitement'
+            },
+            'socratic': {
+                'approach': 'Pose thought-provoking questions and guide learners to discover answers',
+                'depth': 'Challenge assumptions, explore implications, and develop critical thinking',
+                'tone': 'Inquisitive and contemplative, encouraging reflection'
+            },
+            'technical': {
+                'approach': 'Precise definitions, mathematical foundations, and systematic explanations',
+                'depth': 'Rigorous analysis with formulas, proofs, and technical specifications',
+                'tone': 'Professional and exact, emphasizing accuracy and completeness'
+            }
+        }
+        
+        style_config = style_configs.get(teaching_style, style_configs['comprehensive'])
+        
+        system_prompt = (
+            "You are a master educator who creates exceptional teaching content. "
+            "Your slides are comprehensive, engaging, and designed to maximize learning. "
+            "Output ONLY valid JSON, no markdown formatting."
+        )
+        
+        user_prompt = f"""Create {slide_count} deeply educational slides for a professor-led lecture.
+
+CONTENT TO TEACH:
+{summary_text}
+
+TEACHING STYLE: {teaching_style.upper()}
+- Approach: {style_config['approach']}
+- Depth: {style_config['depth']}
+- Tone: {style_config['tone']}
+
+Generate a JSON response with this EXACT structure:
+{{
+  "slides": [
+    {{
+      "slideNumber": 1,
+      "title": "Clear, Descriptive Title",
+      "content": [
+        "First teaching point - detailed explanation (2-3 sentences)",
+        "Second teaching point - with examples and context (2-3 sentences)",
+        "Third teaching point - connecting to previous concepts (2-3 sentences)",
+        "Fourth teaching point - practical applications (2-3 sentences)"
+      ],
+      "narration": "Complete spoken script for this slide. This is what the professor will actually SAY - make it natural, conversational, and thorough. Include transitions, emphasis points, and engaging language. Should be 200-300 words for proper pacing.",
+      "example": {{
+        "title": "🎯 Real-World Example",
+        "content": "Concrete example that illustrates the concept"
+      }},
+      "visuals": [
+        {{
+          "icon": "📊",
+          "title": "Visual Element 1",
+          "description": "Brief description"
+        }},
+        {{
+          "icon": "🔬",
+          "title": "Visual Element 2",
+          "description": "Brief description"
+        }}
+      ],
+      "keyTakeaway": "One crucial insight from this slide"
+    }}
+  ]
+}}
+
+CRITICAL REQUIREMENTS:
+1. Each slide should have 4-6 content points
+2. The "narration" field is THE ACTUAL SPOKEN SCRIPT (200-300 words per slide)
+3. Use analogies, examples, and clear explanations
+4. Build concepts progressively across slides
+5. Include at least 1 example per slide
+6. Use appropriate emojis for visual icons
+7. Return ONLY the JSON, no markdown code blocks
+
+Output the complete JSON now:"""
+
+        try:
+            response = client.chat.completions.create(
+                model="openai/gpt-oss-20b",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                max_tokens=2500,
+                temperature=0.3
+            )
+        except Exception as e:
+            return jsonify({"error": f"Slides generation failed: {str(e)}"}), 500
+        
+        slides_json_str = response.choices[0].message.content.strip()
+        
+        # Robust JSON extraction
+        slide_data = extract_json_object(slides_json_str)
+        if not slide_data or 'slides' not in slide_data:
+            return jsonify({
+                "error": "Failed to parse AI response as JSON",
+                "raw_response": slides_json_str[:800]
+            }), 500
+        
+        return jsonify(slide_data)
+        
+    except json.JSONDecodeError as e:
+        return jsonify({
+            "error": "Failed to parse AI response as JSON",
+            "details": str(e),
+            "raw_response": slides_json_str[:500] if 'slides_json_str' in locals() else ""
+        }), 500
+    except Exception as e:
+        return jsonify({"error": f"Slide generation failed: {str(e)}"}), 500
+
+
+@app.route('/api/generate-professor-audio', methods=['POST'])
+def generate_professor_audio():
+    """Generate TTS audio for the complete professor lecture with timestamps"""
+    try:
+        data = request.get_json(silent=True) or {}
+        
+        slides = data.get('slides', [])
+        voice_id = data.get('voiceId', '21m00Tcm4TlvDq8ikWAM')  # Default to Rachel
+        teaching_style = data.get('teachingStyle', 'comprehensive')
+        
+        if not slides:
+            return jsonify({"error": "No slides provided"}), 400
+        
+        # Build complete narration script with slide markers
+        full_script = ""
+        timestamps = []
+        current_time = 0.0
+        
+        for i, slide in enumerate(slides):
+            narration = slide.get('narration', '')
+            
+            # Add slide marker and timestamp
+            timestamps.append({
+                'slideIndex': i,
+                'start': current_time,
+                'title': slide.get('title', f'Slide {i+1}')
+            })
+            
+            # Add intro for each slide (except first)
+            if i > 0:
+                full_script += f"\n\n[Slide {i+1}] "
+            
+            full_script += narration
+            
+            # Estimate duration (average speaking rate: 150 words per minute)
+            word_count = len(narration.split())
+            duration_seconds = (word_count / 150) * 60
+            current_time += duration_seconds
+            
+            # Add brief pause between slides (2 seconds)
+            if i < len(slides) - 1:
+                full_script += " ... "
+                current_time += 2.0
+        
+        # ✅ FIXED: Better error handling and fallback logic
+        os.makedirs("static/audio", exist_ok=True)
+        
+        # Try ElevenLabs first if client is available
+        if eleven_client and ELEVENLABS_API_KEY:
+            try:
+                print(f"Attempting ElevenLabs TTS with voice: {voice_id}")
+                
+                audio = eleven_client.text_to_speech.convert(
+                    voice_id=voice_id,
+                    model_id="eleven_turbo_v2",
+                    text=full_script,
+                    output_format="mp3_44100_128"
+                )
+
+                filename = f"professor_{int(datetime.now().timestamp())}.mp3"
+                filepath = os.path.join("static/audio", filename)
+                
+                with open(filepath, "wb") as f:
+                    for chunk in audio:
+                        f.write(chunk)
+
+                audio_url = f"/static/audio/{filename}"
+                
+                return jsonify({
+                    "message": "Professor audio generated successfully (ElevenLabs)",
+                    "audioUrl": audio_url,
+                    "timestamps": timestamps,
+                    "totalDuration": current_time,
+                    "voiceId": voice_id,
+                    "script": full_script
+                })
+                
+            except Exception as e:
+                print(f"ElevenLabs failed: {str(e)}, falling back to gTTS")
+                # Fall through to gTTS
+        
+        # Fallback to gTTS
+        print("Using gTTS fallback")
+        tts = gTTS(text=full_script, lang='en', slow=False)
+        filename = f"professor_gtts_{int(datetime.now().timestamp())}.mp3"
+        filepath = os.path.join("static/audio", filename)
+        tts.save(filepath)
+        
+        audio_url = f"/static/audio/{filename}"
+        
+        return jsonify({
+            "message": "Professor audio generated successfully (gTTS fallback)",
+            "audioUrl": audio_url,
+            "timestamps": timestamps,
+            "totalDuration": current_time,
+            "voiceId": "gtts",
+            "script": full_script
+        })
+        
+    except Exception as e:
+        print(f"Audio generation error: {str(e)}")
+        return jsonify({"error": f"Audio generation failed: {str(e)}"}), 500
+    
 
 @app.route('/smart')
 def smart_page():
@@ -128,28 +395,26 @@ RULES:
 
 Output the complete JSON now:"""
 
-        # Call Together AI
+        # Call Together AI (stable model and settings for JSON fidelity)
         response = client.chat.completions.create(
-            model="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
+            model="openai/gpt-oss-20b",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            max_tokens=3000,
-            temperature=0.5
+            max_tokens=2500,
+            temperature=0.3
         )
         
         schedule_json_str = response.choices[0].message.content.strip()
-        
-        # Clean up response - remove markdown code blocks if present
-        schedule_json_str = re.sub(r'^```json\s*', '', schedule_json_str)
-        schedule_json_str = re.sub(r'^```\s*', '', schedule_json_str)
-        schedule_json_str = re.sub(r'\s*```$', '', schedule_json_str)
-        schedule_json_str = schedule_json_str.strip()
-        
-        # Parse JSON
-        import json
-        schedule_data = json.loads(schedule_json_str)
+
+        # Robust JSON extraction using helper (handles code fences and trailing commas)
+        schedule_data = extract_json_object(schedule_json_str)
+        if not schedule_data or 'schedule' not in schedule_data:
+            return jsonify({
+                "error": "Failed to parse AI response as JSON",
+                "raw_response": schedule_json_str[:800]
+            }), 500
         
         return jsonify(schedule_data)
         
@@ -157,7 +422,7 @@ Output the complete JSON now:"""
         return jsonify({
             "error": "Failed to parse AI response as JSON",
             "details": str(e),
-            "raw_response": schedule_json_str[:500]  # First 500 chars for debugging
+            "raw_response": schedule_json_str[:500] if 'schedule_json_str' in locals() else ""
         }), 500
     except Exception as e:
         return jsonify({"error": f"Schedule generation failed: {str(e)}"}), 500
@@ -167,7 +432,285 @@ def schedule_api():
     """Alias route used by frontend to generate schedules (same as /api/generate-schedule)."""
     return generate_schedule()
 
+# Add these routes to your app.py file
 
+@app.route('/podcast')
+def podcast():
+    """Podcast mode page route"""
+    return render_template('podcast.html')
+
+
+@app.route('/api/generate-podcast-script', methods=['POST'])
+def generate_podcast_script():
+    """Generate AI-powered podcast script from document content"""
+    try:
+        data = request.get_json(silent=True) or {}
+        
+        # Extract parameters
+        summary_text = data.get('summaryText', '')
+        source_text = data.get('sourceText', '')
+        duration = data.get('duration', 10)  # 10, 30, or 60 minutes
+        style = data.get('style', 'educational')  # educational, conversational, interview, storytelling
+        pace = data.get('pace', 'normal')  # slow, normal, fast
+        tone = data.get('tone', 'calm')  # enthusiastic, calm, serious, friendly
+        language = data.get('language', 'en')  # en, es, fr, de, hi
+        
+        if not summary_text and not source_text:
+            return jsonify({"error": "No document content provided"}), 400
+        
+        # Build context
+        context = ""
+        if summary_text:
+            context += f"DOCUMENT SUMMARY:\n{summary_text}\n\n"
+        if source_text:
+            context += f"FULL DOCUMENT TEXT:\n{source_text}\n\n"
+        
+        # Style-specific instructions
+        style_instructions = {
+            'educational': {
+                'format': 'Single narrator explaining concepts clearly with examples',
+                'structure': 'Introduction → Main concepts → Key takeaways → Conclusion',
+                'voice': 'Professional, authoritative, teaching tone'
+            },
+            'conversational': {
+                'format': 'Two hosts discussing the topic in a natural, engaging dialogue',
+                'structure': 'Host A introduces → Both discuss main points → Back-and-forth Q&A → Wrap-up',
+                'voice': 'Friendly, casual, occasionally humorous'
+            },
+            'interview': {
+                'format': 'Interviewer asking questions, expert answering',
+                'structure': 'Introduction → Series of insightful questions and answers → Final thoughts',
+                'voice': 'Curious interviewer, knowledgeable expert'
+            },
+            'storytelling': {
+                'format': 'Narrative-driven explanation with story elements',
+                'structure': 'Hook/scenario → Journey through concepts → Resolution/insights',
+                'voice': 'Engaging, descriptive, narrative flow'
+            }
+        }
+        
+        # Pace adjustments
+        pace_instructions = {
+            'slow': 'Take time to explain concepts thoroughly with multiple examples. Use longer pauses.',
+            'normal': 'Balanced pace with clear explanations and relevant examples.',
+            'fast': 'Brisk pace focusing on key points and essential information. Quick transitions.'
+        }
+        
+        # Tone adjustments
+        tone_instructions = {
+            'enthusiastic': 'High energy, excited about the topic, use exclamations and positive language',
+            'calm': 'Measured, soothing delivery, professional and composed',
+            'serious': 'Formal, authoritative, focused on facts and accuracy',
+            'friendly': 'Warm, approachable, conversational and relatable'
+        }
+        
+        # Language settings
+        language_names = {
+            'en': 'English',
+            'es': 'Spanish',
+            'fr': 'French',
+            'de': 'German',
+            'hi': 'Hindi'
+        }
+        
+        selected_style = style_instructions.get(style, style_instructions['educational'])
+        
+        # Calculate word count target (average speaking rate: 150 words per minute)
+        target_words = duration * 150
+        
+        # AI prompt for podcast script generation
+        system_prompt = (
+            "You are an expert podcast scriptwriter who creates engaging, well-structured audio content. "
+            "Create scripts that sound natural when spoken aloud. Use conversational language. "
+            "Output ONLY the script text, no JSON, no metadata."
+        )
+        
+        user_prompt = f"""Create a {duration}-minute podcast script from the following content:
+
+CONTENT TO COVER:
+{context}
+
+PODCAST SPECIFICATIONS:
+- Duration: {duration} minutes (approximately {target_words} words)
+- Style: {style} - {selected_style['format']}
+- Structure: {selected_style['structure']}
+- Voice/Tone: {tone_instructions.get(tone, tone_instructions['calm'])}
+- Pace: {pace_instructions.get(pace, pace_instructions['normal'])}
+- Language: {language_names.get(language, 'English')}
+
+SCRIPT REQUIREMENTS:
+
+1. FORMAT FOR {style.upper()} STYLE:
+   {selected_style['format']}
+
+2. STRUCTURE:
+   - Opening (10%): Engaging hook and introduction
+   - Main Content (75%): Core concepts from the document
+   - Closing (15%): Summary and final thoughts
+
+3. WRITING STYLE:
+   - Write for the ear, not the eye (conversational, natural flow)
+   - Use short sentences and simple language
+   - Include natural transitions ("Now, let's talk about...", "Here's the interesting part...")
+   - Add verbal cues for emphasis ("This is crucial:", "Pay attention to this:")
+   - {selected_style['voice']}
+
+4. CONTENT GUIDELINES:
+   - Extract and explain key concepts from the provided content
+   - Use analogies and examples to clarify complex ideas
+   - Include relevant details but prioritize clarity
+   - Make connections between different concepts
+   - {pace_instructions.get(pace)}
+
+5. DIALOGUE FORMAT (if conversational/interview style):
+   HOST A: [dialogue]
+   HOST B: [dialogue]
+   
+   For single narrator, just write the script without labels.
+
+6. LENGTH:
+   Target approximately {target_words} words ({duration} minutes at normal speaking pace)
+
+OUTPUT REQUIREMENTS:
+- Write ONLY the podcast script
+- No metadata, no JSON formatting
+- Natural, speakable language
+- Clear section breaks with [PAUSE] where appropriate
+- Include [INTRO MUSIC], [OUTRO MUSIC] markers if relevant
+
+Write the complete {language_names.get(language, 'English')} podcast script now:"""
+
+        # Call Together AI with higher token limit for longer podcasts
+        max_tokens_map = {
+            10: 2500,
+            30: 5000,
+            60: 8000
+        }
+        
+        response = client.chat.completions.create(
+            model="openai/gpt-oss-20b",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            max_tokens=max_tokens_map.get(duration, 3000),
+            temperature=0.7
+        )
+        
+        script = response.choices[0].message.content.strip()
+        
+        # Calculate actual word count and estimated duration
+        word_count = len(script.split())
+        estimated_duration = round(word_count / 150, 1)  # 150 words per minute
+        
+        return jsonify({
+            "script": script,
+            "wordCount": word_count,
+            "estimatedDuration": estimated_duration,
+            "settings": {
+                "duration": duration,
+                "style": style,
+                "pace": pace,
+                "tone": tone,
+                "language": language
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({"error": f"Podcast script generation failed: {str(e)}"}), 500
+
+from elevenlabs import ElevenLabs
+
+# Initialize ElevenLabs client
+eleven_client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
+
+@app.route('/api/text-to-speech', methods=['POST'])
+def text_to_speech():
+    """Convert podcast script to real audio using ElevenLabs TTS"""
+    try:
+        data = request.get_json(silent=True) or {}
+        script = data.get('script', '')
+        # Prefer an explicit voiceId from the client; otherwise use env default
+        voice_id = data.get('voiceId') or os.getenv("ELEVENLABS_VOICE_ID")
+        model = data.get('model', 'eleven_turbo_v2')  # Stable and free-tier friendly
+
+        if not script:
+            return jsonify({"error": "No script provided"}), 400
+
+        os.makedirs("static/audio", exist_ok=True)
+
+        try:
+            if not voice_id:
+                raise RuntimeError("missing_voice_id")
+
+            # Try ElevenLabs first
+            audio = eleven_client.text_to_speech.convert(
+                voice_id=voice_id,
+                model_id=model,
+                text=script,
+                output_format="mp3_44100_128"
+            )
+
+            filename = f"podcast_{int(datetime.now().timestamp())}.mp3"
+            filepath = os.path.join("static/audio", filename)
+            with open(filepath, "wb") as f:
+                for chunk in audio:
+                    f.write(chunk)
+
+            audio_url = f"/static/audio/{filename}"
+            return jsonify({
+                "message": "TTS audio generated successfully.",
+                "script": script,
+                "audioUrl": audio_url,
+                "voiceId": voice_id,
+                "model": model
+            })
+        except Exception as e:
+            # Fallback to gTTS if ElevenLabs fails (e.g., quota_exceeded or missing voice id)
+            try:
+                tts = gTTS(text=script)
+                filename = f"podcast_fallback_{int(datetime.now().timestamp())}.mp3"
+                filepath = os.path.join("static/audio", filename)
+                tts.save(filepath)
+                audio_url = f"/static/audio/{filename}"
+                return jsonify({
+                    "message": "TTS audio generated via fallback (gTTS).",
+                    "script": script,
+                    "audioUrl": audio_url,
+                    "voiceId": voice_id or "gtts",
+                    "model": "gtts"
+                })
+            except Exception as ge:
+                return jsonify({"error": f"TTS generation failed (fallback): {str(ge)}"}), 500
+
+    except Exception as e:
+        return jsonify({"error": f"TTS generation failed: {str(e)}"}), 500
+
+
+@app.route('/api/save-podcast', methods=['POST'])
+def save_podcast():
+    """Save podcast metadata for later retrieval"""
+    try:
+        data = request.get_json(silent=True) or {}
+        
+        # Extract podcast data
+        podcast_data = {
+            'title': data.get('title', 'Untitled Podcast'),
+            'script': data.get('script', ''),
+            'settings': data.get('settings', {}),
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        # In production, save to database
+        # For now, just return success
+        return jsonify({
+            "success": True,
+            "message": "Podcast saved successfully",
+            "podcastId": f"podcast_{int(datetime.now().timestamp())}"
+        })
+        
+    except Exception as e:
+        return jsonify({"error": f"Failed to save podcast: {str(e)}"}), 500
 @app.route('/api/download-cheatsheet', methods=['POST'])
 def download_cheatsheet():
     """Generate and download a cheat sheet PDF"""
@@ -331,7 +874,7 @@ Output the complete JSON now:"""
 
         # Call Together AI
         response = client.chat.completions.create(
-            model="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
+            model="openai/gpt-oss-20b",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
@@ -389,7 +932,7 @@ def process_pdf():
     # ✅ Get AI summary from Together model with longer, well-spaced Markdown
     try:
         response = client.chat.completions.create(
-            model="openai/gpt-oss-20b",
+            model="openai/gpt-oss-120b",
             messages=[
                 {"role": "system", "content": (
                     "You are an expert document analyst who creates well-structured, comprehensive summaries. "
@@ -549,7 +1092,7 @@ def chat():
     system_prompt = (
         "You are an expert professor who explains concepts clearly with structure, examples, and step-by-step reasoning. "
         "You have access to both a summary and the full document text. Use both to provide comprehensive, accurate answers. "
-        "Always cite specific concepts from the context. If the answer is not in the provided context, say so explicitly."
+        "Always cite specific concepts from the context. If the answer is not in the provided context, say so explicitly.Also try to be to teh point . dont over say anything"
     ) if mode == 'professor' else (
         "You are a helpful assistant with access to document context."
     )
@@ -577,7 +1120,7 @@ def chat():
 
     try:
         response = client.chat.completions.create(
-            model="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
+            model="openai/gpt-oss-20b",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}

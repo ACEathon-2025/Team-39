@@ -1,0 +1,13 @@
+0000000000000000000000000000000000000000 36b3d1f66b8400b9400a3355983d738ffc3b7fd1 calvin <calvinj4320@gmail.com> 1759679467 +0530	commit (initial): initial commit
+36b3d1f66b8400b9400a3355983d738ffc3b7fd1 36b3d1f66b8400b9400a3355983d738ffc3b7fd1 calvin <calvinj4320@gmail.com> 1759679474 +0530	Branch: renamed refs/heads/main to refs/heads/main
+36b3d1f66b8400b9400a3355983d738ffc3b7fd1 36b3d1f66b8400b9400a3355983d738ffc3b7fd1 calvin <calvinj4320@gmail.com> 1759679504 +0530	Branch: renamed refs/heads/main to refs/heads/main
+36b3d1f66b8400b9400a3355983d738ffc3b7fd1 469dbba1eb9ba895b697876a997e472835edfedf calvin <calvinj4320@gmail.com> 1759684155 +0530	commit: implement summary mode with basic structure and frontend
+469dbba1eb9ba895b697876a997e472835edfedf 8ecd2f09ca5605bd85f3fcf956ec2d7e469fe54a calvin <calvinj4320@gmail.com> 1759684283 +0530	commit: read me updated
+8ecd2f09ca5605bd85f3fcf956ec2d7e469fe54a ba8bf22bdd31f019bbcccd792910984d533cda2a calvin <calvinj4320@gmail.com> 1759852757 +0530	commit: Read me file updated
+ba8bf22bdd31f019bbcccd792910984d533cda2a 390df1ed4f92b29485d81afb5a151afcf5ec967c calvin <calvinj4320@gmail.com> 1759855684 +0530	commit: refactor: simplify Flask backend - remove complex functions, keep core chat and summary features
+390df1ed4f92b29485d81afb5a151afcf5ec967c b0f7ddaa174ac8c02fe7ea5353d4caa989180bf0 calvin <calvinj4320@gmail.com> 1759856055 +0530	filter-branch: rewrite
+b0f7ddaa174ac8c02fe7ea5353d4caa989180bf0 948cef9abaa35e6ed85cc828b87c9dce4ecc4baa calvin <calvinj4320@gmail.com> 1759856421 +0530	merge feature/chat-improvements: Fast-forward
+948cef9abaa35e6ed85cc828b87c9dce4ecc4baa 6ae2dc8ff2f1959500a676e844a5192816c90d34 calvin <calvinj4320@gmail.com> 1759940721 +0530	commit (rebase): read.md updated
+6ae2dc8ff2f1959500a676e844a5192816c90d34 470e544494e84696020d6bfcb0fd5d2f197d55a4 calvin <calvinj4320@gmail.com> 1759941693 +0530	commit: V2 updated
+470e544494e84696020d6bfcb0fd5d2f197d55a4 c27d1a4737846f48b7e9ff6b0c16cb2191fa93b2 calvin <calvinj4320@gmail.com> 1759941811 +0530	commit: readme updated
+c27d1a4737846f48b7e9ff6b0c16cb2191fa93b2 492a40306a930f4063790bd57f7f66779176665a calvin <calvinj4320@gmail.com> 1759941912 +0530	commit: updated backend

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OuchMyBrain.io - Teacher Mode</title>
+    <title>OuchMyBrain.io - Professor Mode</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
@@ -76,7 +76,7 @@
             font-size: 1rem;
         }
 
-        .control-btn:hover {
+        .control-btn:hover:not(:disabled) {
             background: rgba(255, 255, 255, 0.2);
             transform: translateY(-2px);
         }
@@ -139,8 +139,6 @@
             color: #ffffff;
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
             line-height: 1.2;
-            z-index: 10;
-            position: relative;
         }
 
         .slide-content {
@@ -154,14 +152,8 @@
             transition: all 0.3s ease;
             padding: 0.2rem 0;
             border-radius: 0.25rem;
-            display: inline;
-        }
-
-        .slide-content .sentence.highlighted {
-            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(153, 69, 255, 0.2));
-            color: #ffffff;
-            font-weight: 500;
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+            display: block;
+            margin-bottom: 1rem;
         }
 
         .visual-element {
@@ -203,6 +195,31 @@
             line-height: 1.6;
         }
 
+        .example-box {
+            background: linear-gradient(135deg, rgba(0, 255, 150, 0.1), rgba(0, 212, 255, 0.1));
+            border: 1px solid rgba(0, 255, 150, 0.3);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            transform: translateX(-20px);
+            opacity: 0;
+            transition: all 0.5s ease;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .example-box.animate {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .example-title {
+            font-weight: 600;
+            color: #00ff96;
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+        }
+
         .progress-bar {
             position: absolute;
             bottom: 0;
@@ -238,7 +255,7 @@
             font-size: 1.5rem;
         }
 
-        .nav-btn:hover {
+        .nav-btn:hover:not(:disabled) {
             background: rgba(255, 255, 255, 0.2);
             transform: translateY(-4px);
             box-shadow: 0 10px 25px rgba(0, 212, 255, 0.3);
@@ -248,65 +265,6 @@
             opacity: 0.3;
             cursor: not-allowed;
             transform: none;
-        }
-
-        .speaking-indicator {
-            position: fixed;
-            top: 50%;
-            left: 2rem;
-            transform: translateY(-50%);
-            background: rgba(0, 212, 255, 0.2);
-            border: 1px solid rgba(0, 212, 255, 0.5);
-            border-radius: 1rem;
-            padding: 1rem;
-            display: none;
-            backdrop-filter: blur(20px);
-        }
-
-        .speaking-indicator.active {
-            display: block;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: translateY(-50%) scale(1); opacity: 0.8; }
-            50% { transform: translateY(-50%) scale(1.05); opacity: 1; }
-        }
-
-        .example-box {
-            background: linear-gradient(135deg, rgba(0, 255, 150, 0.1), rgba(0, 212, 255, 0.1));
-            border: 1px solid rgba(0, 255, 150, 0.3);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            margin: 1.5rem 0;
-            transform: translateX(-20px);
-            opacity: 0;
-            transition: all 0.5s ease;
-        }
-
-        .example-box.animate {
-            transform: translateX(0);
-            opacity: 1;
-        }
-
-        .example-title {
-            font-weight: 600;
-            color: #00ff96;
-            margin-bottom: 0.5rem;
-            font-size: 1.3rem;
-        }
-
-        .example-box {
-            background: linear-gradient(135deg, rgba(0, 255, 150, 0.1), rgba(0, 212, 255, 0.1));
-            border: 1px solid rgba(0, 255, 150, 0.3);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            margin: 1.5rem 0;
-            transform: translateX(-20px);
-            opacity: 0;
-            transition: all 0.5s ease;
-            font-size: 1.1rem;
-            line-height: 1.6;
         }
 
         .floating-particles {
@@ -345,6 +303,150 @@
             }
         }
 
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 3rem;
+            border-radius: 2rem;
+            max-width: 600px;
+            width: 90%;
+            border: 1px solid rgba(255,255,255,0.1);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal h2 {
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 0.75rem;
+            color: white;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4ff, #9945ff);
+            border: none;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .progress-message {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #9945ff);
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .error-message {
+            background: rgba(255, 50, 50, 0.2);
+            border: 1px solid rgba(255, 50, 50, 0.5);
+            color: #ff6b6b;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
         @media (max-width: 768px) {
             .slide {
                 flex-direction: column;
@@ -373,163 +475,26 @@
 </head>
 <body>
     <div class="floating-particles" id="particles"></div>
-    <div class="speaking-indicator" id="speakingIndicator">
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-            🎤 <span>Speaking...</span>
-        </div>
-    </div>
 
     <div class="presentation-container">
         <div class="header">
             <div class="logo">🎓 Professor Mode</div>
-            <div class="slide-counter" id="slideCounter">1 / 5</div>
+            <div class="slide-counter" id="slideCounter">Ready</div>
             <div class="controls">
-                <button class="control-btn" id="playPauseBtn" onclick="togglePlayback()">⏸️</button>
-                <button class="control-btn" onclick="restartSlide()">🔄</button>
+                <button class="control-btn" id="generateBtn" onclick="openGenerateModal()">🤖 Generate Lecture</button>
+                <button class="control-btn" id="playPauseBtn" onclick="togglePlayback()" disabled>▶️</button>
+                <button class="control-btn" onclick="restartSlide()" disabled id="restartBtn">🔄</button>
                 <button class="control-btn" onclick="goToScheduler()" title="Go to Scheduler">📅</button>
                 <button class="control-btn" onclick="goToIndex()" title="Back to Dashboard">📊</button>
             </div>
         </div>
 
         <div class="slide-container">
-            <!-- Slide 1: Introduction -->
-            <div class="slide active" data-slide="0">
-                <div class="content-area">
-                    <h1 class="slide-title">Machine Learning Fundamentals</h1>
-                    <div class="slide-content" id="content-0">
-                        <span class="sentence">Welcome to our comprehensive study of Machine Learning!</span>
-                        <span class="sentence">Today we'll explore the core concepts that power artificial intelligence.</span>
-                        <span class="sentence">Machine learning is a subset of artificial intelligence that enables computers to learn and improve from experience without being explicitly programmed.</span>
-                        <span class="sentence">Think of it as teaching a computer to recognize patterns, just like how you learned to recognize faces or understand language.</span>
-                    </div>
-                </div>
-                <div class="visual-area">
-                    <div class="visual-element">
-                        <span class="visual-icon">🤖</span>
-                        <div class="visual-title">Artificial Intelligence</div>
-                        <div class="visual-description">The broad field of creating intelligent machines</div>
-                    </div>
-                    <div class="visual-element">
-                        <span class="visual-icon">🧠</span>
-                        <div class="visual-title">Machine Learning</div>
-                        <div class="visual-description">A subset that learns from data</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Slide 2: Types of Learning -->
-            <div class="slide" data-slide="1">
-                <div class="content-area">
-                    <h1 class="slide-title">Types of Machine Learning</h1>
-                    <div class="slide-content" id="content-1">
-                        <span class="sentence">There are three main types of machine learning approaches.</span>
-                        <span class="sentence">Supervised Learning uses labeled data to train models, like teaching with examples and correct answers.</span>
-                        <span class="sentence">Unsupervised Learning finds hidden patterns in data without labels, like discovering customer groups from purchase behavior.</span>
-                        <span class="sentence">Reinforcement Learning learns through trial and error, receiving rewards for good actions and penalties for bad ones.</span>
-                    </div>
-                    <div class="example-box">
-                        <div class="example-title">🎯 Example: Email Classification</div>
-                        <div>Supervised learning can classify emails as spam or not spam using thousands of pre-labeled examples.</div>
-                    </div>
-                </div>
-                <div class="visual-area">
-                    <div class="visual-element">
-                        <span class="visual-icon">👨‍🏫</span>
-                        <div class="visual-title">Supervised</div>
-                        <div class="visual-description">Learning with a teacher</div>
-                    </div>
-                    <div class="visual-element">
-                        <span class="visual-icon">🔍</span>
-                        <div class="visual-title">Unsupervised</div>
-                        <div class="visual-description">Finding hidden patterns</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Slide 3: Neural Networks -->
-            <div class="slide" data-slide="2">
-                <div class="content-area">
-                    <h1 class="slide-title">Neural Networks</h1>
-                    <div class="slide-content" id="content-2">
-                        <span class="sentence">Neural networks are inspired by how the human brain processes information.</span>
-                        <span class="sentence">They consist of interconnected nodes called neurons that process and transmit information.</span>
-                        <span class="sentence">Each connection has a weight that determines how much influence one neuron has on another.</span>
-                        <span class="sentence">Through training, these weights adjust to recognize patterns and make accurate predictions.</span>
-                    </div>
-                    <div class="example-box">
-                        <div class="example-title">🧮 Mathematical Foundation</div>
-                        <div>Each neuron applies: Output = Activation(Σ(input × weight) + bias)</div>
-                    </div>
-                </div>
-                <div class="visual-area">
-                    <div class="visual-element">
-                        <span class="visual-icon">🕸️</span>
-                        <div class="visual-title">Network Structure</div>
-                        <div class="visual-description">Layers of interconnected nodes</div>
-                    </div>
-                    <div class="visual-element">
-                        <span class="visual-icon">⚡</span>
-                        <div class="visual-title">Activation Functions</div>
-                        <div class="visual-description">Control signal flow</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Slide 4: Training Process -->
-            <div class="slide" data-slide="3">
-                <div class="content-area">
-                    <h1 class="slide-title">Training Process</h1>
-                    <div class="slide-content" id="content-3">
-                        <span class="sentence">Training a machine learning model is like teaching a student through practice and feedback.</span>
-                        <span class="sentence">We feed the model training data and compare its predictions to the correct answers.</span>
-                        <span class="sentence">The model calculates its error and adjusts its internal parameters to improve accuracy.</span>
-                        <span class="sentence">This process repeats thousands of times until the model achieves satisfactory performance.</span>
-                    </div>
-                    <div class="example-box">
-                        <div class="example-title">🔄 Training Steps</div>
-                        <div>1. Forward pass → 2. Calculate error → 3. Backward pass → 4. Update weights → Repeat</div>
-                    </div>
-                </div>
-                <div class="visual-area">
-                    <div class="visual-element">
-                        <span class="visual-icon">📊</span>
-                        <div class="visual-title">Loss Function</div>
-                        <div class="visual-description">Measures prediction errors</div>
-                    </div>
-                    <div class="visual-element">
-                        <span class="visual-icon">🎯</span>
-                        <div class="visual-title">Optimization</div>
-                        <div class="visual-description">Improves model accuracy</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Slide 5: Applications -->
-            <div class="slide" data-slide="4">
-                <div class="content-area">
-                    <h1 class="slide-title">Real-World Applications</h1>
-                    <div class="slide-content" id="content-4">
-                        <span class="sentence">Machine learning powers many technologies we use daily.</span>
-                        <span class="sentence">Recommendation systems suggest movies on Netflix or products on Amazon based on your preferences.</span>
-                        <span class="sentence">Computer vision enables autonomous vehicles to recognize traffic signs and pedestrians.</span>
-                        <span class="sentence">Natural language processing allows virtual assistants to understand and respond to human speech.</span>
-                    </div>
-                    <div class="example-box">
-                        <div class="example-title">🌟 Future Possibilities</div>
-                        <div>Healthcare diagnosis, climate modeling, drug discovery, and personalized education are emerging frontiers.</div>
-                    </div>
-                </div>
-                <div class="visual-area">
-                    <div class="visual-element">
-                        <span class="visual-icon">🚗</span>
-                        <div class="visual-title">Autonomous Vehicles</div>
-                        <div class="visual-description">Self-driving cars</div>
-                    </div>
-                    <div class="visual-element">
-                        <span class="visual-icon">🏥</span>
-                        <div class="visual-title">Healthcare</div>
-                        <div class="visual-description">Medical diagnosis & treatment</div>
-                    </div>
+            <div id="loadingSlide" class="slide active" data-slide="0">
+                <div style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                    <div style="font-size: 4rem; margin-bottom: 2rem;">🎓</div>
+                    <h1 style="font-size: 3rem; margin-bottom: 1rem;">Welcome to Professor Mode</h1>
+                    <p style="font-size: 1.5rem; color: rgba(255,255,255,0.7); max-width: 600px;">Click "Generate Lecture" to create an AI-powered teaching session with voice narration</p>
                 </div>
             </div>
         </div>
@@ -538,18 +503,75 @@
         
         <div class="navigation">
             <button class="nav-btn" id="prevBtn" onclick="previousSlide()" disabled>‹</button>
-            <button class="nav-btn" id="nextBtn" onclick="nextSlide()">›</button>
+            <button class="nav-btn" id="nextBtn" onclick="nextSlide()" disabled>›</button>
         </div>
     </div>
 
+    <div id="generateModal" class="modal">
+        <div class="modal-content">
+            <h2>Generate Professor Lecture</h2>
+            
+            <div class="form-group">
+                <label>Topic/Summary Text:</label>
+                <textarea id="summaryInput" placeholder="Paste your document summary or topic here..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Number of Slides:</label>
+                <select id="slideCount">
+                    <option value="3">3 Slides</option>
+                    <option value="5" selected>5 Slides</option>
+                    <option value="7">7 Slides</option>
+                    <option value="10">10 Slides</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Teaching Style:</label>
+                <select id="teachingStyle">
+                    <option value="comprehensive">Comprehensive - Deep explanations with examples</option>
+                    <option value="storytelling">Storytelling - Narrative-driven teaching</option>
+                    <option value="socratic">Socratic - Question-based learning</option>
+                    <option value="technical">Technical - Detailed and precise</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Voice (ElevenLabs):</label>
+                <select id="voiceSelect">
+                    <option value="21m00Tcm4TlvDq8ikWAM">Rachel - Professional Female</option>
+                    <option value="29vD33N1CtxCmqQRPOHJ">Drew - Deep Male</option>
+                    <option value="EXAVITQu4vr4xnSDxMaL">Bella - Warm Female</option>
+                    <option value="onwK4e9ZLuTAKqWW03F9">Daniel - British Male</option>
+                </select>
+            </div>
+            
+            <div class="error-message" id="errorMessage"></div>
+            
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeGenerateModal()">Cancel</button>
+                <button class="btn-primary" onclick="generateLecture()" id="confirmGenBtn">Generate Lecture</button>
+            </div>
+            
+            <div class="progress-container" id="generationProgress">
+                <div class="progress-message">🎓 Generating your lecture...</div>
+                <div class="progress-track">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">Initializing...</div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="audioPlayer" style="display: none;"></audio>
+
     <script>
         let currentSlide = 0;
-        let currentSentence = 0;
-        let isPlaying = true;
-        let speakingInterval;
-        let autoPlayInterval;
-        const totalSlides = 5;
-        const sentenceDuration = 2000; // 2 seconds per sentence
+        let isPlaying = false;
+        let totalSlides = 0;
+        let audioPlayer = null;
+        let slideData = null;
+        let isGenerating = false;
 
         // Initialize particles
         function createParticles() {
@@ -564,22 +586,37 @@
             }
         }
 
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            setTimeout(() => {
+                errorEl.style.display = 'none';
+            }, 5000);
+        }
+
         function updateSlideCounter() {
-            document.getElementById('slideCounter').textContent = `${currentSlide + 1} / ${totalSlides}`;
+            if (totalSlides > 0) {
+                document.getElementById('slideCounter').textContent = `${currentSlide + 1} / ${totalSlides}`;
+            }
         }
 
         function updateProgressBar() {
-            const progress = ((currentSlide + 1) / totalSlides) * 100;
-            document.getElementById('progressBar').style.width = progress + '%';
+            if (totalSlides > 0) {
+                const progress = ((currentSlide + 1) / totalSlides) * 100;
+                document.getElementById('progressBar').style.width = progress + '%';
+            }
         }
 
         function updateNavigationButtons() {
             document.getElementById('prevBtn').disabled = currentSlide === 0;
-            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+            document.getElementById('nextBtn').disabled = currentSlide >= totalSlides - 1;
         }
 
         function animateVisualElements() {
             const currentSlideElement = document.querySelector(`[data-slide="${currentSlide}"]`);
+            if (!currentSlideElement) return;
+            
             const visualElements = currentSlideElement.querySelectorAll('.visual-element');
             const exampleBoxes = currentSlideElement.querySelectorAll('.example-box');
             
@@ -598,54 +635,7 @@
             }, 300);
         }
 
-        function highlightSentence(slideIndex, sentenceIndex) {
-            const content = document.getElementById(`content-${slideIndex}`);
-            const sentences = content.querySelectorAll('.sentence');
-            
-            // Clear all highlights
-            sentences.forEach(sentence => {
-                sentence.classList.remove('highlighted');
-            });
-            
-            // Highlight current sentence
-            if (sentences[sentenceIndex]) {
-                sentences[sentenceIndex].classList.add('highlighted');
-                
-                // Show speaking indicator
-                document.getElementById('speakingIndicator').classList.add('active');
-                
-                // Hide speaking indicator after sentence duration
-                setTimeout(() => {
-                    document.getElementById('speakingIndicator').classList.remove('active');
-                }, sentenceDuration - 500);
-            }
-        }
-
-        function startAutoNarration() {
-            if (!isPlaying) return;
-            
-            const currentSlideElement = document.querySelector(`[data-slide="${currentSlide}"]`);
-            const sentences = currentSlideElement.querySelectorAll('.sentence');
-            
-            if (currentSentence < sentences.length) {
-                highlightSentence(currentSlide, currentSentence);
-                currentSentence++;
-                
-                autoPlayInterval = setTimeout(() => {
-                    startAutoNarration();
-                }, sentenceDuration);
-            } else {
-                // Slide finished, pause or go to next
-                setTimeout(() => {
-                    if (currentSlide < totalSlides - 1 && isPlaying) {
-                        nextSlide();
-                    }
-                }, 1000);
-            }
-        }
-
         function showSlide(slideIndex) {
-            // Hide all slides
             document.querySelectorAll('.slide').forEach((slide, index) => {
                 slide.classList.remove('active', 'prev');
                 if (index < slideIndex) {
@@ -653,30 +643,19 @@
                 }
             });
             
-            // Show current slide
-            document.querySelector(`[data-slide="${slideIndex}"]`).classList.add('active');
+            const targetSlide = document.querySelector(`[data-slide="${slideIndex}"]`);
+            if (targetSlide) {
+                targetSlide.classList.add('active');
+            }
             
-            // Reset sentence highlighting
-            currentSentence = 0;
-            clearTimeout(autoPlayInterval);
-            
-            // Clear all visual animations
             document.querySelectorAll('.visual-element, .example-box').forEach(el => {
                 el.classList.remove('animate');
             });
             
-            // Update UI
             updateSlideCounter();
             updateProgressBar();
             updateNavigationButtons();
-            
-            // Start animations and narration
             animateVisualElements();
-            setTimeout(() => {
-                if (isPlaying) {
-                    startAutoNarration();
-                }
-            }, 1000);
         }
 
         function nextSlide() {
@@ -694,41 +673,218 @@
         }
 
         function togglePlayback() {
+            if (!audioPlayer) return;
+            
             isPlaying = !isPlaying;
             const btn = document.getElementById('playPauseBtn');
             
             if (isPlaying) {
                 btn.textContent = '⏸️';
-                startAutoNarration();
+                audioPlayer.play();
             } else {
                 btn.textContent = '▶️';
-                clearTimeout(autoPlayInterval);
-                document.getElementById('speakingIndicator').classList.remove('active');
+                audioPlayer.pause();
             }
         }
 
         function restartSlide() {
-            currentSentence = 0;
-            clearTimeout(autoPlayInterval);
-            
-            // Clear highlights
-            document.querySelectorAll('.sentence').forEach(sentence => {
-                sentence.classList.remove('highlighted');
-            });
-            
-            if (isPlaying) {
-                startAutoNarration();
+            if (audioPlayer && slideData && slideData.timestamps) {
+                const slideTimestamp = slideData.timestamps.find(t => t.slideIndex === currentSlide);
+                if (slideTimestamp) {
+                    audioPlayer.currentTime = slideTimestamp.start;
+                    if (!isPlaying) {
+                        togglePlayback();
+                    }
+                }
             }
         }
 
         function goToScheduler() {
-            // Navigate to the scheduler
             window.location.href = '/time';
         }
 
         function goToIndex() {
-            // Navigate back to the index dashboard
             window.location.href = '/';
+        }
+
+        function openGenerateModal() {
+            document.getElementById('generateModal').style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+            const storedSummary = sessionStorage.getItem('currentSummary');
+            if (storedSummary) {
+                document.getElementById('summaryInput').value = storedSummary;
+            }
+        }
+
+        function closeGenerateModal() {
+            document.getElementById('generateModal').style.display = 'none';
+            document.getElementById('generationProgress').style.display = 'none';
+        }
+
+        function updateProgress(percent, text) {
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressText').textContent = text;
+        }
+
+        async function generateLecture() {
+            if (isGenerating) return;
+            
+            const summaryText = document.getElementById('summaryInput').value.trim();
+            const slideCount = parseInt(document.getElementById('slideCount').value);
+            const teachingStyle = document.getElementById('teachingStyle').value;
+            const voiceId = document.getElementById('voiceSelect').value;
+            
+            if (!summaryText) {
+                showError('Please enter a topic or summary text');
+                return;
+            }
+            
+            isGenerating = true;
+            document.getElementById('confirmGenBtn').disabled = true;
+            document.getElementById('generationProgress').style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+            
+            try {
+                updateProgress(10, 'Analyzing content...');
+                
+                console.log('Generating slides...');
+                const slideResponse = await fetch('/api/generate-professor-slides', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        summaryText: summaryText,
+                        slideCount: slideCount,
+                        teachingStyle: teachingStyle
+                    })
+                });
+                
+                if (!slideResponse.ok) {
+                    const errorData = await slideResponse.json();
+                    throw new Error(errorData.error || 'Failed to generate slides');
+                }
+                
+                slideData = await slideResponse.json();
+                console.log('Slides generated:', slideData);
+                updateProgress(40, 'Creating teaching script...');
+                
+                console.log('Generating audio...');
+                const audioResponse = await fetch('/api/generate-professor-audio', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        slides: slideData.slides,
+                        voiceId: voiceId,
+                        teachingStyle: teachingStyle
+                    })
+                });
+                
+                if (!audioResponse.ok) {
+                    const errorData = await audioResponse.json();
+                    throw new Error(errorData.error || 'Failed to generate audio');
+                }
+                
+                const audioData = await audioResponse.json();
+                console.log('Audio generated:', audioData);
+                updateProgress(80, 'Preparing presentation...');
+                
+                buildSlidesFromData(slideData.slides);
+                
+                audioPlayer = document.getElementById('audioPlayer');
+                audioPlayer.src = audioData.audioUrl;
+                audioPlayer.load();
+                
+                slideData.timestamps = audioData.timestamps;
+                
+                updateProgress(100, 'Lecture ready!');
+                
+                setTimeout(() => {
+                    closeGenerateModal();
+                    totalSlides = slideData.slides.length;
+                    currentSlide = 0;
+                    document.getElementById('playPauseBtn').disabled = false;
+                    document.getElementById('restartBtn').disabled = false;
+                    document.getElementById('prevBtn').disabled = false;
+                    document.getElementById('nextBtn').disabled = false;
+                    showSlide(0);
+                    setupAudioSync(audioData.timestamps);
+                }, 500);
+                
+            } catch (error) {
+                console.error('Generation error:', error);
+                showError('Generation failed: ' + error.message);
+            } finally {
+                isGenerating = false;
+                document.getElementById('confirmGenBtn').disabled = false;
+            }
+        }
+
+        function buildSlidesFromData(slides) {
+            const container = document.querySelector('.slide-container');
+            container.innerHTML = '';
+            
+            slides.forEach((slide, index) => {
+                const slideDiv = document.createElement('div');
+                slideDiv.className = 'slide';
+                slideDiv.setAttribute('data-slide', index);
+                if (index === 0) slideDiv.classList.add('active');
+                
+                const contentPoints = slide.content.map((text, i) => 
+                    `<span class="sentence">${text}</span>`
+                ).join('');
+                
+                const visualElements = slide.visuals.map(visual => `
+                    <div class="visual-element">
+                        <span class="visual-icon">${visual.icon}</span>
+                        <div class="visual-title">${visual.title}</div>
+                        <div class="visual-description">${visual.description}</div>
+                    </div>
+                `).join('');
+                
+                const exampleBox = slide.example ? `
+                    <div class="example-box">
+                        <div class="example-title">${slide.example.title}</div>
+                        <div>${slide.example.content}</div>
+                    </div>
+                ` : '';
+                
+                slideDiv.innerHTML = `
+                    <div class="content-area">
+                        <h1 class="slide-title">${slide.title}</h1>
+                        <div class="slide-content" id="content-${index}">
+                            ${contentPoints}
+                        </div>
+                        ${exampleBox}
+                    </div>
+                    <div class="visual-area">
+                        ${visualElements}
+                    </div>
+                `;
+                
+                container.appendChild(slideDiv);
+            });
+        }
+
+        function setupAudioSync(timestamps) {
+            if (!audioPlayer || !timestamps) return;
+            
+            audioPlayer.addEventListener('timeupdate', () => {
+                const currentTime = audioPlayer.currentTime;
+                
+                for (let i = timestamps.length - 1; i >= 0; i--) {
+                    if (currentTime >= timestamps[i].start) {
+                        if (currentSlide !== timestamps[i].slideIndex) {
+                            currentSlide = timestamps[i].slideIndex;
+                            showSlide(currentSlide);
+                        }
+                        break;
+                    }
+                }
+            });
+            
+            audioPlayer.addEventListener('ended', () => {
+                isPlaying = false;
+                document.getElementById('playPauseBtn').textContent = '▶️';
+            });
         }
 
         // Keyboard navigation
@@ -739,9 +895,7 @@
             } else if (e.key === 'ArrowLeft') {
                 e.preventDefault();
                 previousSlide();
-            } else if (e.key === 'r') {
-                restartSlide();
-            } else if (e.key === 'p') {
+            } else if (e.key === 'p' || e.key === 'P') {
                 togglePlayback();
             }
         });
@@ -749,8 +903,25 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             createParticles();
-            showSlide(0);
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const autoGenerate = urlParams.get('autoGenerate');
+            
+            if (autoGenerate === 'true') {
+                setTimeout(() => {
+                    openGenerateModal();
+                }, 500);
+            }
         });
+
+        // Load from summary function
+        function loadFromSummary(summaryText, sourceText) {
+            sessionStorage.setItem('currentSummary', summaryText);
+            if (sourceText) {
+                sessionStorage.setItem('currentSourceText', sourceText);
+            }
+            window.location.href = '/teacher?autoGenerate=true';
+        }
     </script>
 </body>
 </html>

@@ -1068,7 +1068,7 @@
                     <div class="nav-icon">👨‍🏫</div>
                     <div class="nav-label">Professor Mode</div>
                 </div>
-                <div class="nav-item" data-view="podcast">
+                <div class="nav-item" data-view="podcast" onclick="window.location.href='/podcast'">
                     <div class="nav-icon">🎙️</div>
                     <div class="nav-label">Podcast Mode</div>
                 </div>
@@ -1080,6 +1080,7 @@
                     <div class="nav-icon">📅</div>
                     <div class="nav-label">Flashcards</div>
                 </div>
+            
             </nav>
         </aside>
 
@@ -1762,6 +1763,27 @@
             
             scheduleContent.innerHTML = html;
         }
+        // Add this to the end of your script section in teacher.html
+
+// Check if coming from index page with pre-loaded summary
+window.addEventListener('load', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const autoGenerate = urlParams.get('autoGenerate');
+    
+    if (autoGenerate === 'true') {
+        // Wait a moment then open modal
+        setTimeout(() => {
+            openGenerateModal();
+        }, 500);
+    }
+});
+
+// Function to be called from index page
+function loadFromSummary(summaryText, sourceText) {
+    sessionStorage.setItem('currentSummary', summaryText);
+    sessionStorage.setItem('currentSourceText', sourceText);
+    window.location.href = '/teacher?autoGenerate=true';
+}
 
         // Download summary as PDF
         function downloadSummaryAsPDF() {

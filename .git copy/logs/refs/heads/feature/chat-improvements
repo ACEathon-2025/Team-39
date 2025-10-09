@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 390df1ed4f92b29485d81afb5a151afcf5ec967c calvin <calvinj4320@gmail.com> 1759855840 +0530	branch: Created from HEAD
+390df1ed4f92b29485d81afb5a151afcf5ec967c 45b23f8b8d53802992788d5c6a041b4bb5706ea5 calvin <calvinj4320@gmail.com> 1759855965 +0530	commit: Remove .env file and add to .gitignore
+45b23f8b8d53802992788d5c6a041b4bb5706ea5 f4353bb8448ac8be23ce34424e0e6d1a933de889 calvin <calvinj4320@gmail.com> 1759856055 +0530	commit: Remove .env and ignore it
+f4353bb8448ac8be23ce34424e0e6d1a933de889 948cef9abaa35e6ed85cc828b87c9dce4ecc4baa calvin <calvinj4320@gmail.com> 1759856055 +0530	filter-branch: rewrite
