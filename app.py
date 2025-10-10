@@ -74,6 +74,7 @@ def teacherv2():
 @app.route('/')
 def index():
     return render_template('v3.html')
+
 @app.route('/time')
 def time():
     return render_template('time.html')
@@ -81,6 +82,10 @@ def time():
 @app.route('/settings')
 def settings():
     return render_template('settings.html')
+
+@app.route('/res')
+def res():
+    return render_template('res.html')
 
 @app.route('/about')
 def about():
@@ -689,7 +694,6 @@ Begin the script now:"""
                 "language": language
             }
         })
-        
     except Exception as e:
         print(f"Podcast error: {str(e)}")
         return jsonify({"error": f"Podcast script generation failed: {str(e)}"}), 500
@@ -698,7 +702,6 @@ from elevenlabs import ElevenLabs
 
 # Initialize ElevenLabs client
 eleven_client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
-# REPLACE your /api/text-to-speech route with this OPTIMIZED version:
 
 @app.route('/api/text-to-speech', methods=['POST'])
 def text_to_speech():
@@ -1159,6 +1162,55 @@ def smart_summary():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+import re
+from flask import request, jsonify
+
+def clean_response(text):
+    """Remove markdown formatting and clean up response text"""
+    # Remove markdown bold/italic
+    text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)
+    text = re.sub(r'\*([^*]+)\*', r'\1', text)
+    text = re.sub(r'__([^_]+)__', r'\1', text)
+    text = re.sub(r'_([^_]+)_', r'\1', text)
+    
+    # Remove headers
+    text = re.sub(r'#{1,6}\s+', '', text)
+    
+    # Remove bullet points/lists
+    text = re.sub(r'^\s*[-*+]\s+', '', text, flags=re.MULTILINE)
+    text = re.sub(r'^\s*\d+\.\s+', '', text, flags=re.MULTILINE)
+    
+    # Clean up extra whitespace
+    text = re.sub(r'\n\s*\n', '\n\n', text)
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    
+    return text.strip()
+
+
+import re
+from flask import request, jsonify
+
+def clean_response(text):
+    """Remove markdown formatting and clean up response text"""
+    # Remove markdown bold/italic
+    text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)
+    text = re.sub(r'\*([^*]+)\*', r'\1', text)
+    text = re.sub(r'__([^_]+)__', r'\1', text)
+    text = re.sub(r'_([^_]+)_', r'\1', text)
+    
+    # Remove headers
+    text = re.sub(r'#{1,6}\s+', '', text)
+    
+    # Remove bullet points/lists
+    text = re.sub(r'^\s*[-*+]\s+', '', text, flags=re.MULTILINE)
+    text = re.sub(r'^\s*\d+\.\s+', '', text, flags=re.MULTILINE)
+    
+    # Clean up extra whitespace
+    text = re.sub(r'\n\s*\n', '\n\n', text)
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    
+    return text.strip()
+
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
@@ -1171,50 +1223,58 @@ def chat():
     if not question:
         return jsonify({"error": "Missing 'question'"}), 400
 
+    # Build concise system prompt
     system_prompt = (
-        "You are an expert professor who explains concepts clearly with structure, examples, and step-by-step reasoning. "
-        "You have access to both a summary and the full document text. Use both to provide comprehensive, accurate answers. "
-        "Always cite specific concepts from the context. If the answer is not in the provided context, say so explicitly.Also try to be to teh point . dont over say anything"
+        "You are an expert professor who explains concepts clearly and concisely.\n\n"
+        "CRITICAL FORMATTING RULES:\n"
+        "- Keep responses SHORT: 2-3 sentences for simple questions, max 1 short paragraph for complex ones\n"
+        "- Use PLAIN TEXT ONLY - absolutely NO markdown formatting (no **, __, ##, bullets, or numbered lists)\n"
+        "- Write in natural prose using normal sentences\n"
+        "- Start with the direct answer immediately\n"
+        "- Be precise and avoid unnecessary elaboration\n"
+        "- If the answer is not in the context, simply state: 'This information is not available in the provided document.'\n\n"
+        "Answer the question directly using plain language."
     ) if mode == 'professor' else (
-        "You are a helpful assistant with access to document context."
+        "You are a helpful assistant. Keep responses very concise (2-3 sentences) and use plain text only - no markdown formatting."
     )
 
-    # Build context from both summary and source text
-    full_context = ""
-    if context_text:
-        full_context += f"DOCUMENT SUMMARY:\n{context_text}\n\n"
-    if source_text:
-        full_context += f"FULL DOCUMENT TEXT:\n{source_text}\n\n"
-    
-    if not full_context:
-        full_context = "No context provided."
-
-    user_prompt = (
-        f"{full_context}"
-        f"QUESTION: {question}\n\n"
-        f"Instructions:\n"
-        f"- Answer based on the provided summary AND full document text\n"
-        f"- Reference specific concepts, facts, or sections from the context\n"
-        f"- If solving a problem, show your step-by-step work\n"
-        f"- Be concise but complete\n"
-        f"- If the answer isn't in the context, state that clearly"
-    )
+    # Build user prompt with context
+    user_prompt = f"Context:\n{source_text[:2000] if source_text else context_text[:1000]}\n\nQuestion: {question}"
 
     try:
+        # Call the LLM API
         response = client.chat.completions.create(
             model="openai/gpt-oss-20b",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            max_tokens=800,
+            max_tokens=200,  # Limit response length
             temperature=0.4
         )
-
-        answer = response.choices[0].message.content if response and response.choices else ""
-        return jsonify({"response": answer})
+        
+        # Extract the AI response
+        ai_response = response.choices[0].message.content if response and response.choices else ""
+        
+        # Clean the response to remove any markdown
+        cleaned_answer = clean_response(ai_response)
+        
+        # Optionally truncate if still too long
+        if len(cleaned_answer) > 500:
+            cleaned_answer = cleaned_answer[:497] + "..."
+        
+        return jsonify({
+            "response": cleaned_answer,
+            "status": "success"
+        })
+        
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+            "error": f"Error generating response: {str(e)}",
+            "status": "error"
+        }), 500
+    
+
 @app.route('/cheatsheet')
 def cheatsheet():
     """Ultimate Cheat Sheet page route"""
@@ -1576,6 +1636,568 @@ def download_ultimate_cheatsheet():
         
     except Exception as e:
         return jsonify({"error": f"PDF generation failed: {str(e)}"}), 500
+from bs4 import BeautifulSoup
+from urllib.parse import quote_plus, urlparse
+import time
 
-if __name__ == '__main__':
-    app.run(debug=True)
+# Add this route to your app.py
+
+@app.route('/research')
+def research():
+    """Research paper generator page"""
+    return render_template('research.html')
+
+
+@app.route('/api/web-research', methods=['POST'])
+def web_research():
+    """Perform intelligent web research on a topic"""
+    try:
+        data = request.get_json(silent=True) or {}
+        query = data.get('query', '').strip()
+        depth = data.get('depth', 5)  # Number of sources to fetch
+        
+        if not query:
+            return jsonify({"error": "No search query provided"}), 400
+        
+        print(f"\n🔍 Starting web research for: {query}")
+        
+        # Use DuckDuckGo search (no API key needed)
+        search_url = f"https://html.duckduckgo.com/html/?q={quote_plus(query)}"
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        
+        try:
+            response = requests.get(search_url, headers=headers, timeout=10)
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            # Extract search results
+            results = []
+            result_divs = soup.find_all('div', class_='result')[:depth]
+            
+            for div in result_divs:
+                title_elem = div.find('a', class_='result__a')
+                snippet_elem = div.find('a', class_='result__snippet')
+                
+                if title_elem and snippet_elem:
+                    url = title_elem.get('href', '')
+                    title = title_elem.get_text(strip=True)
+                    snippet = snippet_elem.get_text(strip=True)
+                    
+                    # Determine source credibility
+                    domain = urlparse(url).netloc
+                    credibility = 'high' if any(x in domain for x in ['.edu', '.gov', '.org']) else 'medium'
+                    
+                    results.append({
+                        'title': title,
+                        'url': url,
+                        'snippet': snippet,
+                        'domain': domain,
+                        'credibility': credibility
+                    })
+            
+            print(f"✅ Found {len(results)} web sources")
+            return jsonify({
+                'results': results,
+                'query': query,
+                'count': len(results)
+            })
+            
+        except Exception as search_error:
+            print(f"⚠️ Web search failed: {str(search_error)}")
+            return jsonify({
+                'results': [],
+                'query': query,
+                'count': 0,
+                'warning': 'Web search unavailable, using PDF content only'
+            })
+            
+    except Exception as e:
+        return jsonify({"error": f"Web research failed: {str(e)}"}), 500
+
+# Updated generate_research_paper function with better model and token limits
+
+@app.route('/api/generate-research-paper', methods=['POST'])
+def generate_research_paper():
+    """Generate comprehensive research paper with web intelligence"""
+    try:
+        data = request.get_json(silent=True) or {}
+        
+        # Extract parameters
+        topic = data.get('topic', '').strip()
+        description = data.get('description', '').strip()
+        revolves_around = data.get('revolvesAround', '').strip()
+        how_it_works = data.get('howItWorks', '').strip()
+        related_topics = data.get('relatedTopics', '').strip()
+        pdf_content = data.get('pdfContent', '').strip()
+        web_sources = data.get('webSources', [])
+        depth_level = data.get('depthLevel', 'detailed')  # quick, detailed, comprehensive
+        
+        if not topic:
+            return jsonify({"error": "Topic is required"}), 400
+        
+        # Build comprehensive context
+        context_parts = []
+        
+        if description:
+            context_parts.append(f"TOPIC DESCRIPTION:\n{description}\n")
+        
+        if revolves_around:
+            context_parts.append(f"KEY FOCUS AREAS:\n{revolves_around}\n")
+        
+        if how_it_works:
+            context_parts.append(f"MECHANISM/PROCESS:\n{how_it_works}\n")
+        
+        if related_topics:
+            context_parts.append(f"RELATED TOPICS:\n{related_topics}\n")
+        
+        if pdf_content:
+            context_parts.append(f"UPLOADED DOCUMENT CONTENT:\n{pdf_content[:4000]}\n")
+        
+        if web_sources:
+            web_context = "WEB RESEARCH FINDINGS:\n"
+            for i, source in enumerate(web_sources[:10], 1):
+                web_context += f"\n[Source {i}] {source.get('title', 'Unknown')}\n"
+                web_context += f"URL: {source.get('url', 'N/A')}\n"
+                web_context += f"Summary: {source.get('snippet', 'N/A')}\n"
+            context_parts.append(web_context)
+        
+        full_context = "\n".join(context_parts)
+        
+        # UPDATED: Much higher token limits for detailed research papers
+        depth_configs = {
+            'quick': {
+                'label': 'Quick Overview',
+                'word_target': 2000,
+                'max_tokens': 3000,  # Increased from 2500
+                'detail': 'concise overview with key points',
+                'sections': 'Abstract, Introduction, Main Discussion (3-4 sections), Conclusion, Key References'
+            },
+            'detailed': {
+                'label': 'Detailed Analysis',
+                'word_target': 5000,
+                'max_tokens': 7000,  # Increased from 5000
+                'detail': 'comprehensive analysis with examples and explanations',
+                'sections': 'Abstract, Introduction, Literature Review, Detailed Analysis (5-7 sections), Case Studies, Discussion, Conclusion, References, Further Reading'
+            },
+            'comprehensive': {
+                'label': 'Comprehensive Research',
+                'word_target': 8000,
+                'max_tokens': 12000,  # Increased from 7500
+                'detail': 'exhaustive research with deep analysis, multiple perspectives, and extensive examples',
+                'sections': 'Abstract, Introduction, Background, Literature Review, Theoretical Framework, Detailed Analysis (8-10 sections), Methodology, Case Studies, Comparative Analysis, Applications, Challenges & Solutions, Future Directions, Conclusion, References, Appendices, Recommended Resources'
+            }
+        }
+        
+        config = depth_configs.get(depth_level, depth_configs['detailed'])
+        
+        # System prompt remains the same
+        system_prompt = """You are an expert academic researcher and technical writer with PhDs in multiple fields. 
+
+Your research papers are known for:
+- Exceptional depth and clarity
+- Rigorous academic standards
+- Comprehensive coverage of all aspects
+- Clear explanations of complex concepts
+- Well-structured logical flow
+- Proper citations and references
+- Balanced perspectives
+- Practical applications and examples
+
+Write in an authoritative yet accessible academic style. Use proper Markdown formatting for structure."""
+
+        # User prompt (keeping your existing detailed prompt)
+        user_prompt = f"""Generate a {config['label']} research paper on the following topic.
+
+TOPIC: {topic}
+
+RESEARCH CONTEXT:
+{full_context}
+
+PAPER SPECIFICATIONS:
+- Target Length: ~{config['word_target']} words
+- Detail Level: {config['detail']}
+- Required Sections: {config['sections']}
+
+STRUCTURE REQUIREMENTS:
+
+# {topic}
+*A Comprehensive Research Analysis*
+
+---
+
+## Abstract
+- 150-250 word summary
+- Key findings and contributions
+- Research scope and methodology
+
+## 1. Introduction
+- Clear problem statement
+- Research significance and motivation
+- Objectives and scope
+- Paper organization overview
+
+## 2. Background & Context
+- Historical development
+- Current state of the field
+- Key terminology and definitions
+- Fundamental concepts
+
+## 3. Literature Review
+- Existing research and theories
+- Major contributions and milestones
+- Gaps in current knowledge
+- Theoretical frameworks
+
+## 4. Detailed Analysis
+
+### 4.1 [First Major Aspect]
+- In-depth exploration
+- Technical details
+- Supporting evidence
+- Real-world examples
+
+### 4.2 [Second Major Aspect]
+- Comprehensive coverage
+- Mechanisms and processes
+- Data and findings
+- Case studies
+
+### 4.3 [Third Major Aspect]
+- Critical analysis
+- Comparative perspectives
+- Strengths and limitations
+- Implications
+
+[Continue with 4.4, 4.5, etc. as needed based on topic complexity]
+
+## 5. Methodology & Approaches
+- Research methods used
+- Data collection and analysis
+- Experimental setups (if applicable)
+- Validation techniques
+
+## 6. Applications & Use Cases
+- Practical applications
+- Industry implementations
+- Real-world scenarios
+- Success stories and examples
+
+## 7. Challenges & Limitations
+- Current obstacles
+- Technical limitations
+- Ethical considerations
+- Areas of debate
+
+## 8. Future Directions
+- Emerging trends
+- Research opportunities
+- Potential developments
+- Long-term outlook
+
+## 9. Discussion
+- Synthesis of findings
+- Critical evaluation
+- Broader implications
+- Connections to related fields
+
+## 10. Conclusion
+- Summary of key points
+- Main contributions
+- Final insights
+- Recommendations
+
+## References
+[Cite all web sources provided, format as: Author/Source, Title, URL]
+
+## Further Reading & Resources
+### Academic Papers
+- Key papers in the field
+
+### Books & Guides
+- Recommended textbooks
+
+### Online Resources
+- Tutorials and courses
+- Documentation
+- Community resources
+
+### Video Content
+- Educational videos
+- Lectures and talks
+- Demonstrations
+
+---
+
+WRITING GUIDELINES:
+
+1. **Depth & Detail**
+   - Explain concepts thoroughly, don't assume knowledge
+   - Include specific examples and concrete details
+   - Provide context for technical terms
+   - Use analogies where helpful
+
+2. **Structure & Flow**
+   - Use clear headers and subheaders (##, ###)
+   - Create logical transitions between sections
+   - Build concepts progressively
+   - Reference earlier sections when connecting ideas
+
+3. **Academic Rigor**
+   - Make evidence-based statements
+   - Cite sources properly
+   - Present multiple perspectives when relevant
+   - Acknowledge limitations and uncertainties
+
+4. **Clarity & Accessibility**
+   - Define technical terms on first use
+   - Use clear, concise sentences
+   - Break down complex ideas step-by-step
+   - Include illustrative examples
+
+5. **Formatting**
+   - Use **bold** for key terms and emphasis
+   - Use `code formatting` for technical terms, formulas, or code
+   - Use > blockquotes for important definitions
+   - Use bullet points and numbered lists appropriately
+   - Include horizontal rules (---) between major sections
+
+6. **Content Requirements**
+   - Every section must add unique value
+   - No repetition or filler content
+   - Include specific data, numbers, examples when possible
+   - Connect theory to practice
+
+7. **Citations & References**
+   - Cite web sources provided in context
+   - Format: [Source Title](URL) or as footnotes
+   - Prioritize credible sources (.edu, .gov, .org)
+   - Include publication dates when available
+Generate the complete research paper now following ALL guidelines above. Make it comprehensive, insightful, and publication-ready."""
+        print(f"\n📝 Generating research paper on: {topic}")
+        print(f"📊 Depth Level: {config['label']}")
+        print(f"🎯 Target: ~{config['word_target']} words")
+        print(f"🔢 Max Tokens: {config['max_tokens']}")
+        
+        # Try multiple models with graceful fallback if a model is not available
+        models_to_try = [
+            "meta-llama/Llama-3.3-70B-Instruct-Turbo",          # preferred (Together model ID)
+            "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",     # common alt
+            "meta-llama/Llama-3.1-70B-Instruct-Turbo",          # alias alt
+            "meta-llama/Meta-Llama-3-70B-Instruct",             # older naming
+            "openai/gpt-oss-20b"                                # stable fallback
+        ]
+
+        response = None
+        selected_model = None
+        last_error = None
+
+        for model_id in models_to_try:
+            try:
+                print(f"Trying model: {model_id}")
+                response = client.chat.completions.create(
+                    model=model_id,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    max_tokens=config['max_tokens'],
+                    temperature=0.7
+                )
+                selected_model = model_id
+                break
+            except Exception as e:
+                err_str = str(e)
+                last_error = err_str
+                if any(tok in err_str.lower() for tok in ["model_not_available", "model not available", "404", "not found", "invalid_request_error"]):
+                    print(f"Model unavailable: {model_id} -> {err_str}")
+                    continue
+                print(f"Model failed: {model_id} -> {err_str}")
+                continue
+
+        if not response:
+            return jsonify({"error": f"No available model from fallback list. Last error: {last_error}"}), 500
+
+        paper_content = response.choices[0].message.content.strip()
+
+        # Calculate stats
+        word_count = len(paper_content.split())
+        estimated_pages = round(word_count / 500, 1)
+
+        print(f"Research paper generated: {word_count} words ({estimated_pages} pages)")
+        if selected_model:
+            print(f"Model used: {selected_model}")
+
+        return jsonify({
+            "paper": paper_content,
+            "stats": {
+                "wordCount": word_count,
+                "estimatedPages": estimated_pages,
+                "depthLevel": depth_level,
+                "sourceCount": len(web_sources),
+                "model": selected_model or "unknown"
+            },
+            "metadata": {
+                "topic": topic,
+                "generatedAt": datetime.now().isoformat(),
+                "sourcesUsed": len(web_sources)
+            }
+        })
+        title_style = ParagraphStyle(
+            'ResearchTitle',
+            parent=styles['Heading1'],
+            fontSize=24,
+            textColor='#1a1a1a',
+            spaceAfter=30,
+            fontName='Helvetica-Bold'
+        )
+        
+        author_style = ParagraphStyle(
+            'Author',
+            parent=styles['Normal'],
+            fontSize=12,
+            spaceAfter=50,
+            alignment=1,
+            fontName='Helvetica'
+        )
+        
+        # Section headers
+        h2_style = ParagraphStyle(
+            'ResearchH2',
+            parent=styles['Heading1'],
+            fontSize=16,
+            textColor='#2c3e50',
+            spaceAfter=12,
+            spaceBefore=24,
+            fontName='Helvetica-Bold'
+        )
+        
+        h3_style = ParagraphStyle(
+            'ResearchH3',
+            parent=styles['Heading2'],
+            fontSize=13,
+            textColor='#34495e',
+            spaceAfter=10,
+            spaceBefore=16,
+            fontName='Helvetica-Bold'
+        )
+        
+        # Body text
+        body_style = ParagraphStyle(
+            'ResearchBody',
+            parent=styles['BodyText'],
+            fontSize=11,
+            leading=16,
+            spaceAfter=12,
+            alignment=4,  # Justify
+            fontName='Times-Roman'
+        )
+        
+        bullet_style = ParagraphStyle(
+            'ResearchBullet',
+            parent=styles['BodyText'],
+            fontSize=11,
+            leading=15,
+            spaceAfter=6,
+            leftIndent=30,
+            fontName='Times-Roman'
+        )
+        
+        # Helper function for safe text processing
+        def clean_inline(text: str) -> str:
+            from xml.sax.saxutils import escape as xml_escape
+            text = xml_escape(text)
+            text = re.sub(r"\*\*(.*?)\*\*", r"<b>\1</b>", text)
+            text = re.sub(r"`([^`]+)`", r"<font face='Courier'>\1</font>", text)
+            text = re.sub(r"\[(.*?)\]\((.*?)\)", r"<u>\1</u>", text)  # Links become underlined
+            return text
+        
+        # Build PDF
+        story = []
+        
+        # Title page
+        story.append(Spacer(1, 2*inch))
+        story.append(Paragraph(clean_inline(title), title_style))
+        story.append(Paragraph(author, author_style))
+        story.append(Paragraph(f"Generated: {datetime.now().strftime('%B %d, %Y')}", author_style))
+        story.append(Spacer(1, 0.5*inch))
+        
+        # Process content
+        lines = content.split('\n')
+        in_code_block = False
+        
+        for line in lines:
+            original_line = line
+            line = line.strip()
+            
+            if not line:
+                story.append(Spacer(1, 0.15*inch))
+                continue
+            
+            # Code blocks
+            if line.startswith('```'):
+                in_code_block = not in_code_block
+                continue
+            
+            if in_code_block:
+                story.append(Paragraph(f"<font face='Courier' size='9'>{xml_escape(line)}</font>", body_style))
+                continue
+            
+            # Headers
+            if line.startswith('# '):
+                text = clean_inline(line[2:].strip())
+                story.append(Paragraph(text, title_style))
+            elif line.startswith('## '):
+                text = clean_inline(line[3:].strip())
+                story.append(Paragraph(text, h2_style))
+            elif line.startswith('### '):
+                text = clean_inline(line[4:].strip())
+                story.append(Paragraph(text, h3_style))
+            # Bullets
+            elif line.startswith('- ') or line.startswith('* '):
+                text = clean_inline(line[2:].strip())
+                story.append(Paragraph(f"• {text}", bullet_style))
+            # Numbered lists
+            elif len(line) > 2 and line[0].isdigit() and line[1:3] in ['. ', ') ']:
+                text = clean_inline(line[2:].strip())
+                story.append(Paragraph(f"{line[0]}. {text}", bullet_style))
+            # Horizontal rules
+            elif line.startswith('---'):
+                story.append(Spacer(1, 0.2*inch))
+            # Blockquotes
+            elif line.startswith('> '):
+                text = clean_inline(line[2:].strip())
+                quote_style = ParagraphStyle(
+                    'Quote',
+                    parent=body_style,
+                    leftIndent=40,
+                    rightIndent=40,
+                    textColor='#555555',
+                    fontSize=10
+                )
+                story.append(Paragraph(f"<i>{text}</i>", quote_style))
+            # Regular paragraphs
+            else:
+                text = clean_inline(line)
+                story.append(Paragraph(text, body_style))
+        
+        # Build PDF
+        doc.build(story)
+        buffer.seek(0)
+        
+        # Generate filename
+        safe_title = re.sub(r'[^\w\s-]', '', title).strip().replace(' ', '_')
+        filename = f'{safe_title}_Research_Paper.pdf'
+        
+        return send_file(
+            buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"PDF generation failed: {str(e)}"}), 500

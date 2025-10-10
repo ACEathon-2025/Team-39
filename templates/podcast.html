@@ -991,69 +991,71 @@
 // Replace your existing generateAudio() function with this:
 
 // Generate audio - FIXED VERSION
+// Generate audio - FIXED VERSION
 async function generateAudio() {
     console.log('🎙️ Starting audio generation...');
     
-    // Show loading immediately
+    if (!generatedScript) {
+        alert('Please generate a script first');
+        return;
+    }
+    
+    // Show loading state
     document.getElementById('scriptPreview').classList.add('hidden');
     document.getElementById('loadingState').classList.remove('hidden');
     document.getElementById('loadingText').textContent = 'Generating audio...';
-    document.getElementById('loadingSubtext').textContent = 'Please wait, processing your script';
+    document.getElementById('loadingSubtext').textContent = 'This may take 10-30 seconds';
     
     try {
-        console.log('📤 Calling TTS API...');
-        
-        const startTime = Date.now();
+        console.log('📤 Sending script to TTS API...');
         
         const response = await fetch('/api/text-to-speech', {
             method: 'POST',
             headers: { 
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ 
                 script: generatedScript,
-                voiceId: '21m00Tcm4TlvDq8ikWAM'
+                voiceId: '21m00Tcm4TlvDq8ikWAM'  // Optional
             })
         });
         
-        const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-        console.log(`📥 Response received in ${elapsed}s`);
-        
-        const data = await response.json();
-        console.log('📥 Response data:', data);
-        
-        // ✅ CHECK if request failed
         if (!response.ok) {
-            throw new Error(data.error || 'Text-to-speech failed');
+            const error = await response.json();
+            throw new Error(error.error || 'Audio generation failed');
         }
         
-        // ✅ CHECK if audioUrl exists
+        const data = await response.json();
+        console.log('✅ Audio response:', data);
+        
         if (!data.audioUrl) {
-            throw new Error('No audio URL returned from server');
+            throw new Error('No audio URL in response');
         }
         
         audioUrl = data.audioUrl;
-        console.log('✅ Audio file ready:', audioUrl);
         
-        // Show the player
+        // Hide loading, show player immediately
         document.getElementById('loadingState').classList.add('hidden');
         document.getElementById('audioPlayer').classList.remove('hidden');
         
-        // Set up the audio element
+        // Set up audio element
         const audio = document.getElementById('audioElement');
-        audio.src = audioUrl + '?t=' + Date.now(); // Cache busting
+        audio.src = audioUrl;
         currentAudio = audio;
         
-        // Load and set up player
-        audio.load();
+        // Set up player controls
         setupAudioPlayer();
         
-        console.log('✅ Audio player initialized');
+        // Update duration display
+        audio.addEventListener('loadedmetadata', () => {
+            document.getElementById('totalTime').textContent = formatTime(audio.duration);
+        });
         
-    } catch (err) {
-        console.error('❌ Error:', err);
-        alert('Failed to generate audio: ' + err.message);
+        console.log('✅ Audio player ready');
+        
+    } catch (error) {
+        console.error('❌ Audio generation error:', error);
+        alert('Audio generation failed: ' + error.message);
         document.getElementById('loadingState').classList.add('hidden');
         document.getElementById('scriptPreview').classList.remove('hidden');
     }
@@ -1095,13 +1097,11 @@ function setupAudioPlayer() {
     
     console.log('✅ Audio controls ready');
 }
-
-// KEEP togglePlay the same:
 function togglePlay() {
     const audio = document.getElementById('audioElement');
+    const playBtn = document.getElementById('playPauseBtn');
     
     if (!audio || !audio.src) {
-        console.error('❌ No audio loaded');
         alert('Please wait for audio to load');
         return;
     }
@@ -1110,28 +1110,46 @@ function togglePlay() {
         audio.pause();
     } else {
         audio.play().catch(err => {
-            console.error('❌ Play failed:', err);
-            alert('Cannot play audio yet. Please wait for it to load completely.');
+            console.error('Playback error:', err);
+            alert('Cannot play audio. Please try again.');
         });
     }
 }
 
         // AUDIO PLAYER FUNCTIONS
         function setupAudioPlayer() {
-            const audio = document.getElementById('audioElement');
-            const progressFill = document.getElementById('progressFill');
-            const playBtn = document.getElementById('playPauseBtn');
-            audio.addEventListener('timeupdate', () => {
-                const progress = (audio.currentTime / audio.duration) * 100;
-                progressFill.style.width = `${progress}%`;
-                document.getElementById('currentTime').textContent = formatTime(audio.currentTime);
-                document.getElementById('totalTime').textContent = formatTime(audio.duration);
-            });
-            audio.addEventListener('ended', () => {
-                isPlaying = false;
-                playBtn.textContent = '▶️';
-            });
+    const audio = document.getElementById('audioElement');
+    const progressFill = document.getElementById('progressFill');
+    const playBtn = document.getElementById('playPauseBtn');
+    
+    // Update progress bar
+    audio.addEventListener('timeupdate', () => {
+        if (audio.duration) {
+            const progress = (audio.currentTime / audio.duration) * 100;
+            progressFill.style.width = `${progress}%`;
+            document.getElementById('currentTime').textContent = formatTime(audio.currentTime);
+            document.getElementById('totalTime').textContent = formatTime(audio.duration);
         }
+    });
+    
+    // Handle playback end
+    audio.addEventListener('ended', () => {
+        isPlaying = false;
+        playBtn.textContent = '▶️';
+        progressFill.style.width = '0%';
+    });
+    
+    // Handle play/pause events
+    audio.addEventListener('play', () => {
+        isPlaying = true;
+        playBtn.textContent = '⏸️';
+    });
+    
+    audio.addEventListener('pause', () => {
+        isPlaying = false;
+        playBtn.textContent = '▶️';
+    });
+}
 
         function togglePlay() {
             const audio = document.getElementById('audioElement');
