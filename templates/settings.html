@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - OuchMyBrain.io</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Dark Theme (Default) */
+            --bg-primary: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.15) 0%, transparent 50%),
+                          radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
+                          linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 30%, #16213e 70%, #0f3460 100%);
+            --bg-sidebar: linear-gradient(180deg, rgba(15, 20, 30, 0.95) 0%, rgba(10, 15, 25, 0.98) 100%);
+            --bg-card: linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%), rgba(15, 20, 30, 0.9);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.4);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-strong: rgba(255, 255, 255, 0.15);
+            --hover-bg: rgba(255, 255, 255, 0.05);
+            --input-bg: rgba(255, 255, 255, 0.05);
+            --gradient-primary: linear-gradient(135deg, #00d4ff, #9945ff);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 30%, #cbd5e1 70%, #94a3b8 100%);
+            --bg-sidebar: linear-gradient(180deg, rgba(248, 250, 252, 0.98) 0%, rgba(241, 245, 249, 0.98) 100%);
+            --bg-card: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%);
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border-color: rgba(148, 163, 184, 0.2);
+            --border-strong: rgba(148, 163, 184, 0.3);
+            --hover-bg: rgba(148, 163, 184, 0.1);
+            --input-bg: rgba(248, 250, 252, 0.8);
+            --gradient-primary: linear-gradient(135deg, #0ea5e9, #8b5cf6);
+        }
+
+        [data-theme="sepia"] {
+            --bg-primary: linear-gradient(135deg, #fef7ed 0%, #fed7aa 30%, #fdba74 70%, #f97316 100%);
+            --bg-sidebar: linear-gradient(180deg, rgba(254, 247, 237, 0.98) 0%, rgba(254, 215, 170, 0.98) 100%);
+            --bg-card: linear-gradient(145deg, rgba(255, 251, 235, 0.95) 0%, rgba(254, 243, 199, 0.9) 100%);
+            --text-primary: #431407;
+            --text-secondary: #9a3412;
+            --text-muted: #c2410c;
+            --border-color: rgba(194, 65, 12, 0.15);
+            --border-strong: rgba(194, 65, 12, 0.25);
+            --hover-bg: rgba(194, 65, 12, 0.08);
+            --input-bg: rgba(254, 243, 199, 0.6);
+            --gradient-primary: linear-gradient(135deg, #ea580c, #dc2626);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            color: var(--text-primary);
+            transition: all 0.4s ease;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 80px;
+            background: var(--bg-sidebar);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 100;
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .sidebar:hover {
+            width: 240px;
+        }
+
+        .logo-section {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            overflow: hidden;
+        }
+
+        .logo-icon {
+            min-width: 40px;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #00d4ff, #9945ff);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 16px rgba(153, 69, 255, 0.3);
+        }
+
+        .logo-text {
+            font-size: 1.1rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00d4ff 0%, #9945ff 50%, #ff6496 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease 0.1s;
+        }
+
+        .sidebar:hover .logo-text {
+            opacity: 1;
+        }
+
+        .nav-items {
+            flex: 1;
+            padding: 1.5rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.9rem 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: linear-gradient(180deg, #00d4ff, #9945ff);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .nav-item:hover::before,
+        .nav-item.active::before {
+            transform: scaleY(1);
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-item.active {
+            background: rgba(153, 69, 255, 0.15);
+        }
+
+        .nav-icon {
+            min-width: 32px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-item:hover .nav-icon {
+            transform: scale(1.1);
+        }
+
+        .nav-label {
+            font-size: 0.95rem;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease 0.1s;
+        }
+
+        .sidebar:hover .nav-label {
+            opacity: 1;
+        }
+
+        .nav-item.active .nav-label {
+            font-weight: 600;
+            background: linear-gradient(135deg, #00d4ff, #9945ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .settings-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .settings-header {
+            margin-bottom: 2rem;
+        }
+
+        .settings-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #9945ff 0%, #00d4ff 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .settings-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .settings-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(25px) saturate(200%);
+            border: 1px solid var(--border-color);
+            border-radius: 2rem;
+            padding: 2rem;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .settings-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 32px 64px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-icon {
+            font-size: 1.8rem;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-label {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .setting-name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .setting-description {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Custom Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            width: 52px;
+            height: 28px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: linear-gradient(135deg, #00d4ff, #9945ff);
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(24px);
+        }
+
+        /* Theme Selector */
+        .theme-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .theme-option {
+            padding: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .theme-option:hover {
+            border-color: var(--border-strong);
+            transform: translateY(-2px);
+        }
+
+        .theme-option.active {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .theme-preview {
+            width: 100%;
+            height: 40px;
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .theme-dark { background: linear-gradient(135deg, #0a0a0a, #1a1a2e); }
+        .theme-light { background: linear-gradient(135deg, #f8fafc, #e2e8f0); }
+        .theme-sepia { background: linear-gradient(135deg, #fef7ed, #fed7aa); }
+
+        .theme-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        /* Dropdown */
+        .dropdown {
+            position: relative;
+            min-width: 140px;
+        }
+
+        .dropdown-button {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-button:hover {
+            background: var(--hover-bg);
+            border-color: var(--border-strong);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            display: none;
+            margin-top: 0.25rem;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            border-radius: 0.5rem;
+            margin: 0.25rem;
+        }
+
+        .dropdown-item:hover {
+            background: var(--hover-bg);
+        }
+
+        /* Input Field */
+        .input-field {
+            width: 140px;
+            padding: 0.75rem 1rem;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(0, 212, 255, 0.5);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4ff, #9945ff);
+            color: white;
+            box-shadow: 0 4px 16px rgba(153, 69, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(153, 69, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--input-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--hover-bg);
+            border-color: var(--border-strong);
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        @media (max-width: 768px) {
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                width: 60px;
+            }
+            
+            .sidebar:hover {
+                width: 200px;
+            }
+            
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .settings-card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo-section">
+                <div class="logo-icon">🧠</div>
+                <div class="logo-text">OuchMyBrain</div>
+            </div>
+
+            <nav class="nav-items">
+                <div class="nav-item" onclick="window.location.href='/'">
+                    <div class="nav-icon">📄</div>
+                    <div class="nav-label">Summary</div>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/teacher'">
+                    <div class="nav-icon">👨‍🏫</div>
+                    <div class="nav-label">Professor Mode</div>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/podcast'">
+                    <div class="nav-icon">🎙️</div>
+                    <div class="nav-label">Podcast Mode</div>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/time'">
+                    <div class="nav-icon">📅</div>
+                    <div class="nav-label">Study Scheduler</div>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/flash'">
+                    <div class="nav-icon">🃏</div>
+                    <div class="nav-label">Flashcards</div>
+                </div>
+                <div class="nav-item" onclick="window.location.href='/cheatsheet'">
+                    <div class="nav-icon">📖</div>
+                    <div class="nav-label">Cheat Sheet</div>
+                </div>
+                <div class="nav-item active">
+                    <div class="nav-icon">⚙️</div>
+                    <div class="nav-label">Settings</div>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <div class="settings-container">
+                <div class="settings-header">
+                    <h1 class="settings-title">⚙️ Settings</h1>
+                    <p class="settings-subtitle">Customize your OuchMyBrain experience</p>
+                </div>
+
+                <div class="settings-grid">
+                    <!-- Appearance Settings -->
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <div class="card-icon">🎨</div>
+                            <div class="card-title">Appearance</div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <div class="setting-name">Theme</div>
+                                <div class="setting-description">Choose your preferred color theme</div>
+                            </div>
+                        </div>
+
+                        <div class="theme-selector">
+                            <div class="theme-option active" data-theme="dark">
+                                <div class="theme-preview theme-dark"></div>
+                                <div class="theme-name">Dark</div>
+                            </div>
+                            <div class="theme-option" data-theme="light">
+                                <div class="theme-preview theme-light"></div>
+                                <div class="theme-name">Light</div>
+                            </div>
+                            <div class="theme-option" data-theme="sepia">
+                                <div class="theme-preview theme-sepia"></div>
+                                <div class="theme-name">Sepia</div>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <div class="setting-name">Animation Speed</div>
+                                <div class="setting-description">Control interface animation speed</div>
+                            </div>
+                            <div class="dropdown">
+                                <div class="dropdown-button" id="animationSpeed">
+                                    <span>Normal</span>
+                                    <span>▼</span>
+                                </div>
+                                <div class="dropdown-menu" id="animationSpeedMenu">
+                                    <div class="dropdown-item" data-value="slow">Slow</div>
+                                    <div class="dropdown-item" data-value="normal">Normal</div>
+                                    <div class="dropdown-item" data-value="fast">Fast</div>
+                                    <div class="dropdown-item" data-value="none">No Animation</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Study Settings -->
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <div class="card-icon">📚</div>
+                            <div class="card-title">Study Preferences</div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <div class="setting-name">Auto-Generate Summary</div>
+                                <div class="setting-description">Automatically generate summary after PDF upload</div>
+                            </div>
+                            <div class="toggle-switch active" id="autoSummary">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <div class="setting-name">Default Summary Level</div>
+                                <div class="setting-description">Default complexity level for smart summaries</div>
+                            </div>
+                            <div class="dropdown">
+                                <div class="dropdown-button" id="summaryLevel">
+                                    <span>Level 2</span>
+                                    <span>▼</span>
+                                </div>
+                                <div class="dropdown-menu" id="summaryLevelMenu">
+                                    <div class="dropdown-item" data-value="1">Level 1 - Quick Skim</div>
+                                    <div class="dropdown-item" data-value="2">Level 2 - Solid Pass</div>
+                                    <div class="dropdown-item" data-value="3">Level 3 - Comprehensive</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <div class="setting-name">Study Session Duration</div>
+                                <div class="setting-description">Default duration for study sessions (minutes)</div>
+                            </div>
+                            <input type="number" class="input-field" id="sessionDuration" value="50" min="15" max="120" step="5">
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <div class="setting-name">Break Reminders</div>
+                                <div class="setting-description">Show break reminders during study sessions</div>
+                            </div>
+                            <div class="toggle-switch active" id="breakReminders">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Settings -->
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <div class="card-icon">🤖</div>
+                            <div class="card-title">AI Assistant</div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <div class="setting-name">Professor Mode Style</div>
+                                <div class="setting-description">Choose teaching style for AI professor</div>
+                            </div>
+                            <div class="dropdown">
+                                <div class="dropdown-button" id="professorStyle">
+                                    <span>Comprehensive</span>
+                                    <span>▼</span>
+                                </div>
+                                <div class="dropdown-menu" id="professorStyleMenu">
+                                    <div class="dropdown-item" data-value="comprehensive">Comprehensive</div>
+                                    <div class="dropdown-item" data-value="storytelling">Storytelling</div>
+                                    <div class="dropdown-item" data-value="socratic">Socratic</div>
+                                    <div class="dropdown-item" data-value="technical">Technical</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <div class="setting-name">Detailed Explanations</div>
+                                <div class="setting-description">Provide more detailed AI responses</div>
+                            </div>
+                            <div class="toggle-switch active" id="detailedExplanations">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <div class="setting-name">Chat History</div>
+                                <div class="setting-description">Save chat conversations for future reference</div>
+                            </div>
+                            <div class="toggle-switch" id="chatHistory">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Privacy & Data -->
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <div class="card-icon">🔒</div>
+                            <div class="card-title">Privacy & Data</div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <div class="setting-name">Data Collection</div>
+                                <div class="setting-description">Allow anonymous usage analytics to improve the service</div>
+                            </div>
+                            <div class="toggle-switch" id="dataCollection">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <div class="setting-name">Auto-Delete Uploads</div>
+                                <div class="setting-description">Automatically delete uploaded files after processing</div>
+                            </div>
+                            <div class="toggle-switch active" id="autoDelete">
+                                <div class="toggle-slider"></div>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <div class="setting-name">Clear All Data</div>
+                                <div class="setting-description">Remove all saved preferences and data</div>
+                            </div>
+                            <button class="btn btn-secondary" onclick="clearAllData()">Clear Data</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-secondary" onclick="resetToDefaults()">Reset to Defaults</button>
+                    <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Settings management system
+        class SettingsManager {
+            constructor() {
+                this.settings = this.loadSettings();
+                this.initializeUI();
+                this.bindEvents();
+            }
+
+            loadSettings() {
+                const defaultSettings = {
+                    theme: 'dark',
+                    animationSpeed: 'normal',
+                    autoSummary: true,
+                    summaryLevel: 2,
+                    sessionDuration: 50,
+                    breakReminders: true,
+                    professorStyle: 'comprehensive',
+                    detailedExplanations: true,
+                    chatHistory: false,
+                    dataCollection: false,
+                    autoDelete: true
+                };
+
+                try {
+                    const stored = localStorage.getItem('ouchmybrain-settings');
+                    return stored ? { ...defaultSettings, ...JSON.parse(stored) } : defaultSettings;
+                } catch (e) {
+                    console.warn('Failed to load settings:', e);
+                    return defaultSettings;
+                }
+            }
+
+            saveSettings() {
+                try {
+                    localStorage.setItem('ouchmybrain-settings', JSON.stringify(this.settings));
+                    this.showToast('Settings saved successfully!', 'success');
+                } catch (e) {
+                    console.error('Failed to save settings:', e);
+                    this.showToast('Failed to save settings', 'error');
+                }
+            }
+
+            initializeUI() {
+                // Apply current theme
+                document.body.setAttribute('data-theme', this.settings.theme);
+                
+                // Set theme selector
+                document.querySelectorAll('.theme-option').forEach(option => {
+                    option.classList.toggle('active', option.dataset.theme === this.settings.theme);
+                });
+
+                // Set toggle switches
+                this.setToggle('autoSummary', this.settings.autoSummary);
+                this.setToggle('breakReminders', this.settings.breakReminders);
+                this.setToggle('detailedExplanations', this.settings.detailedExplanations);
+                this.setToggle('chatHistory', this.settings.chatHistory);
+                this.setToggle('dataCollection', this.settings.dataCollection);
+                this.setToggle('autoDelete', this.settings.autoDelete);
+
+                // Set dropdowns
+                this.setDropdown('animationSpeed', this.settings.animationSpeed);
+                this.setDropdown('summaryLevel', `Level ${this.settings.summaryLevel}`);
+                this.setDropdown('professorStyle', this.settings.professorStyle);
+
+                // Set input fields
+                document.getElementById('sessionDuration').value = this.settings.sessionDuration;
+
+                // Apply animation speed
+                this.applyAnimationSpeed();
+            }
+
+            setToggle(id, active) {
+                const toggle = document.getElementById(id);
+                if (toggle) {
+                    toggle.classList.toggle('active', active);
+                }
+            }
+
+            setDropdown(id, value) {
+                const button = document.getElementById(id);
+                if (button) {
+                    button.querySelector('span').textContent = value;
+                }
+            }
+
+            applyAnimationSpeed() {
+                const root = document.documentElement;
+                const speeds = {
+                    'none': '0s',
+                    'fast': '0.15s',
+                    'normal': '0.3s',
+                    'slow': '0.6s'
+                };
+                root.style.setProperty('--animation-duration', speeds[this.settings.animationSpeed] || '0.3s');
+            }
+
+            bindEvents() {
+                // Theme selection
+                document.querySelectorAll('.theme-option').forEach(option => {
+                    option.addEventListener('click', () => {
+                        const theme = option.dataset.theme;
+                        this.settings.theme = theme;
+                        document.body.setAttribute('data-theme', theme);
+                        
+                        document.querySelectorAll('.theme-option').forEach(opt => 
+                            opt.classList.remove('active')
+                        );
+                        option.classList.add('active');
+                    });
+                });
+
+                // Toggle switches
+                document.querySelectorAll('.toggle-switch').forEach(toggle => {
+                    toggle.addEventListener('click', () => {
+                        const isActive = toggle.classList.toggle('active');
+                        const settingKey = toggle.id;
+                        this.settings[settingKey] = isActive;
+                    });
+                });
+
+                // Dropdowns
+                this.bindDropdown('animationSpeed', (value) => {
+                    this.settings.animationSpeed = value;
+                    this.applyAnimationSpeed();
+                });
+
+                this.bindDropdown('summaryLevel', (value) => {
+                    this.settings.summaryLevel = parseInt(value);
+                });
+
+                this.bindDropdown('professorStyle', (value) => {
+                    this.settings.professorStyle = value;
+                });
+
+                // Input fields
+                document.getElementById('sessionDuration').addEventListener('change', (e) => {
+                    this.settings.sessionDuration = parseInt(e.target.value);
+                });
+            }
+
+            bindDropdown(id, callback) {
+                const button = document.getElementById(id);
+                const menu = document.getElementById(id + 'Menu');
+                
+                if (!button || !menu) return;
+
+                button.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    // Close other dropdowns
+                    document.querySelectorAll('.dropdown-menu').forEach(m => {
+                        if (m !== menu) m.classList.remove('show');
+                    });
+                    menu.classList.toggle('show');
+                });
+
+                menu.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('dropdown-item')) {
+                        const value = e.target.dataset.value;
+                        const displayValue = e.target.textContent;
+                        
+                        button.querySelector('span').textContent = displayValue;
+                        menu.classList.remove('show');
+                        
+                        if (callback) callback(value);
+                    }
+                });
+            }
+
+            showToast(message, type = 'info') {
+                // Create toast notification
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${type}`;
+                toast.innerHTML = `
+                    <div class="toast-content">
+                        <span>${message}</span>
+                        <button class="toast-close" onclick="this.parentElement.parentElement.remove()">×</button>
+                    </div>
+                `;
+
+                // Add toast styles if not already present
+                if (!document.getElementById('toast-styles')) {
+                    const styles = document.createElement('style');
+                    styles.id = 'toast-styles';
+                    styles.textContent = `
+                        .toast {
+                            position: fixed;
+                            top: 2rem;
+                            right: 2rem;
+                            background: var(--bg-card);
+                            border: 1px solid var(--border-color);
+                            border-radius: 0.75rem;
+                            padding: 1rem;
+                            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                            backdrop-filter: blur(20px);
+                            z-index: 10000;
+                            animation: slideInRight 0.3s ease;
+                            min-width: 300px;
+                        }
+
+                        .toast-success {
+                            border-left: 4px solid #00ff88;
+                        }
+
+                        .toast-error {
+                            border-left: 4px solid #ff6b6b;
+                        }
+
+                        .toast-content {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            gap: 1rem;
+                        }
+
+                        .toast-close {
+                            background: none;
+                            border: none;
+                            color: var(--text-secondary);
+                            cursor: pointer;
+                            font-size: 1.2rem;
+                            padding: 0;
+                            width: 20px;
+                            height: 20px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        }
+
+                        @keyframes slideInRight {
+                            from {
+                                opacity: 0;
+                                transform: translateX(100%);
+                            }
+                            to {
+                                opacity: 1;
+                                transform: translateX(0);
+                            }
+                        }
+                    `;
+                    document.head.appendChild(styles);
+                }
+
+                document.body.appendChild(toast);
+
+                // Auto remove after 3 seconds
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.remove();
+                    }
+                }, 3000);
+            }
+        }
+
+        // Global functions
+        function saveSettings() {
+            settingsManager.saveSettings();
+        }
+
+        function resetToDefaults() {
+            if (confirm('Are you sure you want to reset all settings to defaults? This cannot be undone.')) {
+                localStorage.removeItem('ouchmybrain-settings');
+                location.reload();
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear all data? This will remove all saved preferences, chat history, and cached content. This cannot be undone.')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                settingsManager.showToast('All data cleared successfully', 'success');
+                setTimeout(() => location.reload(), 1500);
+            }
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                menu.classList.remove('show');
+            });
+        });
+
+        // Initialize settings manager
+        const settingsManager = new SettingsManager();
+
+        // Save settings before page unload
+        window.addEventListener('beforeunload', () => {
+            settingsManager.saveSettings();
+        });
+    </script>
+</body>
+</html>

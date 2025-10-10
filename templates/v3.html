@@ -9,16 +9,69 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            /* Dark Theme (Default) */
+            --bg-primary: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.15) 0%, transparent 50%),
+                          radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
+                          linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 30%, #16213e 70%, #0f3460 100%);
+            --bg-sidebar: linear-gradient(180deg, rgba(15, 20, 30, 0.95) 0%, rgba(10, 15, 25, 0.98) 100%);
+            --bg-card: linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%), rgba(15, 20, 30, 0.9);
+            --bg-chat: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(15, 20, 30, 0.98);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.4);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-strong: rgba(255, 255, 255, 0.15);
+            --hover-bg: rgba(255, 255, 255, 0.05);
+            --input-bg: rgba(255, 255, 255, 0.05);
+            --gradient-primary: linear-gradient(135deg, #00d4ff, #9945ff);
+            --gradient-card-border: linear-gradient(45deg, rgba(0, 212, 255, 0.5), rgba(153, 69, 255, 0.5));
+            --shadow-card: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 30%, #cbd5e1 70%, #94a3b8 100%);
+            --bg-sidebar: linear-gradient(180deg, rgba(248, 250, 252, 0.98) 0%, rgba(241, 245, 249, 0.98) 100%);
+            --bg-card: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%);
+            --bg-chat: linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%);
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border-color: rgba(148, 163, 184, 0.2);
+            --border-strong: rgba(148, 163, 184, 0.3);
+            --hover-bg: rgba(148, 163, 184, 0.1);
+            --input-bg: rgba(248, 250, 252, 0.8);
+            --gradient-primary: linear-gradient(135deg, #0ea5e9, #8b5cf6);
+            --gradient-card-border: linear-gradient(45deg, rgba(14, 165, 233, 0.3), rgba(139, 92, 246, 0.3));
+            --shadow-card: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="sepia"] {
+            --bg-primary: linear-gradient(135deg, #fef7ed 0%, #fed7aa 30%, #fdba74 70%, #f97316 100%);
+            --bg-sidebar: linear-gradient(180deg, rgba(254, 247, 237, 0.98) 0%, rgba(254, 215, 170, 0.98) 100%);
+            --bg-card: linear-gradient(145deg, rgba(255, 251, 235, 0.95) 0%, rgba(254, 243, 199, 0.9) 100%);
+            --bg-chat: linear-gradient(145deg, rgba(255, 251, 235, 0.98) 0%, rgba(254, 243, 199, 0.95) 100%);
+            --text-primary: #431407;
+            --text-secondary: #9a3412;
+            --text-muted: #c2410c;
+            --border-color: rgba(194, 65, 12, 0.15);
+            --border-strong: rgba(194, 65, 12, 0.25);
+            --hover-bg: rgba(194, 65, 12, 0.08);
+            --input-bg: rgba(254, 243, 199, 0.6);
+            --gradient-primary: linear-gradient(135deg, #ea580c, #dc2626);
+            --gradient-card-border: linear-gradient(45deg, rgba(234, 88, 12, 0.3), rgba(220, 38, 38, 0.3));
+            --shadow-card: 0 20px 40px rgba(194, 65, 12, 0.1);
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.15) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
-                        linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 30%, #16213e 70%, #0f3460 100%);
+            background: var(--bg-primary);
             min-height: 100vh;
-            color: #ffffff;
+            color: var(--text-primary);
             overflow: hidden;
+            transition: all 0.4s ease;
         }
 
         .app-container {
@@ -30,9 +83,9 @@
         /* SIDEBAR */
         .sidebar {
             width: 80px;
-            background: linear-gradient(180deg, rgba(15, 20, 30, 0.95) 0%, rgba(10, 15, 25, 0.98) 100%);
+            background: var(--bg-sidebar);
             backdrop-filter: blur(20px) saturate(180%);
-            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
             transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -47,7 +100,7 @@
 
         .logo-section {
             padding: 1.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
             gap: 0.75rem;
@@ -1174,8 +1227,17 @@
     <div class="nav-icon">📖</div> <!-- Cheat Sheet -->
     <div class="nav-label">Cheat Sheet</div>
 </div>
-
             </nav>
+            <div class="nav-bottom" style="margin-top:auto; padding: 0.75rem 0; border-top: 1px solid var(--border-color);">
+                <div class="nav-item" data-view="about" onclick="window.location.href='/about'">
+                    <div class="nav-icon">ℹ️</div>
+                    <div class="nav-label">About Us</div>
+                </div>
+                <div class="nav-item" data-view="settings" onclick="window.location.href='/settings'">
+                    <div class="nav-icon">⚙️</div>
+                    <div class="nav-label">Settings</div>
+                </div>
+            </div>
         </aside>
 
         <!-- MAIN CONTENT -->
@@ -1254,7 +1316,15 @@
                     <div class="card summary-card" style="height: calc(100vh - 4rem);">
                         <div class="card-header">
                             <h1 class="card-title">🎙️ Podcast Mode</h1>
-                            <button class="download-btn" onclick="generatePodcast()">🎧 Generate Podcast</button>
+                            <div style="display:flex; gap:0.75rem; align-items:center;">
+                                <label for="podcastDuration" style="font-size:0.9rem; color: rgba(255,255,255,0.8);">Duration</label>
+                                <select id="podcastDuration" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color:white; padding:0.4rem 0.6rem; border-radius:0.5rem;">
+                                    <option value="3">3 min</option>
+                                    <option value="5" selected>5 min</option>
+                                    <option value="10">10 min</option>
+                                </select>
+                                <button class="download-btn" onclick="generatePodcast()">🎧 Generate Podcast</button>
+                            </div>
                         </div>
 
                         <div class="file-badge" id="podcastFileBadge">Upload PDF to create podcast</div>
@@ -1697,14 +1767,15 @@
             podcastContent.innerHTML = '<div style="text-align: center; padding: 3rem;"><div style="font-size: 2rem;">🎙️</div><p>Creating your podcast experience...</p></div>';
 
             try {
-                const response = await fetch('/api/podcast', {
+                const response = await fetch('/api/generate-podcast-script', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
                         text: currentSummaryText,
-                        title: currentDocTitle
+                        title: currentDocTitle,
+                        duration: parseInt(document.getElementById('podcastDuration')?.value || '5', 10)
                     })
                 });
 
@@ -1733,11 +1804,12 @@
             html += '<p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Audio playback coming soon!</p>';
             html += '</div></div>';
             
-            // Transcript
-            if (podcastData.transcript) {
+            // Transcript (prefer transcript, fallback to script)
+            if (podcastData.transcript || podcastData.script) {
                 html += '<div>';
                 html += '<h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: #9945ff;">📝 Podcast Transcript</h3>';
-                html += `<div style="background: rgba(255, 255, 255, 0.03); padding: 1.5rem; border-radius: 1rem; line-height: 1.8;">${podcastData.transcript}</div>`;
+                const text = podcastData.transcript || podcastData.script;
+                html += `<div style="background: rgba(255, 255, 255, 0.03); padding: 1.5rem; border-radius: 1rem; line-height: 1.8; white-space: pre-wrap;">${text}</div>`;
                 html += '</div>';
             }
             

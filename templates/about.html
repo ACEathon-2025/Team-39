@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - OuchMyBrain.io</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 30%, #2e1a47 70%, #4a1a5e 100%);
+            min-height: 100vh;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        /* HEADER */
+        .header {
+            background: rgba(15, 20, 30, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff6b9d 0%, #c06bff 50%, #ff6bda 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.75rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* CONTAINER */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        /* HERO */
+        .hero {
+            text-align: center;
+            margin-bottom: 4rem;
+            animation: fadeInDown 1s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff6b9d, #c06bff, #ff6bda);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.7);
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+
+        /* TEAM GRID */
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 3rem;
+            margin-bottom: 4rem;
+        }
+
+        /* TEAM CARD */
+        .team-card {
+            background: rgba(15, 20, 30, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 2rem;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.5s ease;
+            animation: fadeInUp 1s ease;
+            animation-fill-mode: both;
+        }
+
+        .team-card:nth-child(1) {
+            animation-delay: 0.2s;
+        }
+
+        .team-card:nth-child(2) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .team-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: rgba(255, 107, 157, 0.5);
+            box-shadow: 0 20px 60px rgba(255, 107, 157, 0.3);
+        }
+
+        .team-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 107, 157, 0.1), transparent);
+            transition: left 0.7s ease;
+        }
+
+        .team-card:hover::before {
+            left: 100%;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff6b9d, #c06bff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+            position: relative;
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .avatar::before {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff6b9d, #c06bff, #ff6bda);
+            z-index: -1;
+            animation: rotate 3s linear infinite;
+        }
+
+        .member-info h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .member-role {
+            color: #ff6b9d;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .member-bio {
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.8;
+            margin-bottom: 2rem;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            background: rgba(255, 107, 157, 0.1);
+            border-color: rgba(255, 107, 157, 0.5);
+        }
+
+        .stat-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .social-link {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .social-link:hover {
+            background: linear-gradient(135deg, #ff6b9d, #c06bff);
+            border-color: transparent;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(255, 107, 157, 0.4);
+        }
+
+        /* PROJECT SECTION */
+        .project-section {
+            background: rgba(15, 20, 30, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 2rem;
+            padding: 3rem;
+            margin-bottom: 4rem;
+            animation: fadeIn 1.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .project-section h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .project-description {
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.8;
+            max-width: 800px;
+            margin: 0 auto 2rem;
+            text-align: center;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .tech-tag {
+            background: linear-gradient(135deg, rgba(255, 107, 157, 0.2), rgba(192, 107, 255, 0.2));
+            border: 1px solid rgba(255, 107, 157, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .tech-tag:hover {
+            background: linear-gradient(135deg, #ff6b9d, #c06bff);
+            transform: scale(1.1);
+        }
+
+        /* FLOATING ELEMENTS */
+        .floating-element {
+            position: fixed;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .circle-1 {
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255, 107, 157, 0.1), transparent);
+            border-radius: 50%;
+            top: 10%;
+            left: 5%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .circle-2 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(192, 107, 255, 0.1), transparent);
+            border-radius: 50%;
+            bottom: 10%;
+            right: 5%;
+            animation: float 8s ease-in-out infinite;
+            animation-delay: 2s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-30px); }
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .team-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr;
+            }
+
+            .social-links {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- FLOATING ELEMENTS -->
+    <div class="floating-element circle-1"></div>
+    <div class="floating-element circle-2"></div>
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-content">
+            <a href="/" class="logo">🧠 OuchMyBrain.io</a>
+            <a href="/" class="nav-btn">← Back Home</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- HERO -->
+        <div class="hero">
+            <h1 class="hero-title">Meet The Team</h1>
+            <p class="hero-subtitle">
+                Two passionate Computer Science students revolutionizing how people learn with AI-powered study tools
+            </p>
+        </div>
+
+        <!-- TEAM GRID -->
+        <div class="team-grid">
+            <!-- CALVIN -->
+            <div class="team-card">
+                <div class="card-header">
+                    <div class="avatar">CD</div>
+                    <div class="member-info">
+                        <h2>Calvin D'Souza</h2>
+                        <div class="member-role">Co-Founder & Developer</div>
+                    </div>
+                </div>
+
+                <p class="member-bio">
+                    2nd year Computer Science student at NMAMIT Nitte, India. Passionate about AI, 
+                    full-stack development, and creating tools that make learning more engaging and effective.
+                </p>
+
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <div class="stat-icon">🎓</div>
+                        <div class="stat-label">2nd Year CS</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">💻</div>
+                        <div class="stat-label">Full Stack</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">🤖</div>
+                        <div class="stat-label">AI Enthusiast</div>
+                    </div>
+                </div>
+
+                <div class="social-links">
+                    <a href="https://www.instagram.com/_______.cal/" target="_blank" class="social-link">
+                        📸 Instagram
+                    </a>
+                    <a href="mailto:calvinj4320@gmail.com" class="social-link">
+                        ✉️ Email
+                    </a>
+                    <a href="mailto:nnm24cb015@nmamit.in" class="social-link">
+                        🎓 College Mail
+                    </a>
+                    <a href="https://github.com/Cal2-0" target="_blank" class="social-link">
+                        🐙 GitHub
+                    </a>
+                </div>
+            </div>
+
+            <!-- ERUM -->
+            <div class="team-card">
+                <div class="card-header">
+                    <div class="avatar">EH</div>
+                    <div class="member-info">
+                        <h2>Erum Hanif</h2>
+                        <div class="member-role">Co-Founder & Developer</div>
+                    </div>
+                </div>
+
+                <p class="member-bio">
+                    2nd year Computer Science student at NMAMIT Nitte, India. Enthusiastic about 
+                    creating innovative educational technology and building solutions that empower students worldwide.
+                </p>
+
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <div class="stat-icon">🎓</div>
+                        <div class="stat-label">2nd Year CS</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">💻</div>
+                        <div class="stat-label">Full Stack</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">🎨</div>
+                        <div class="stat-label">UI/UX Lover</div>
+                    </div>
+                </div>
+
+                <div class="social-links">
+                    <a href="https://www.instagram.com/nomnom._.erum/" target="_blank" class="social-link">
+                        📸 Instagram
+                    </a>
+                    <a href="mailto:nnm24cb024@nmamit.in" class="social-link">
+                        🎓 College Mail
+                    </a>
+                    <a href="https://github.com/Erum06" target="_blank" class="social-link">
+                        🐙 GitHub
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- PROJECT SECTION -->
+        <div class="project-section">
+            <h2>🚀 About OuchMyBrain.io</h2>
+            <p class="project-description">
+                Born from our own struggles with traditional study methods, OuchMyBrain.io is an AI-powered learning platform 
+                designed to transform how students absorb and retain information. We combine cutting-edge AI technology with 
+                intuitive design to create personalized study experiences that actually work.
+            </p>
+            <p class="project-description">
+                From AI-generated flashcards to podcast-style learning, intelligent study schedules to interactive professor modes – 
+                every feature is built with one goal: make learning more effective, engaging, and fun.
+            </p>
+            <div class="tech-stack">
+                <div class="tech-tag">🐍 Python</div>
+                <div class="tech-tag">⚡ Flask</div>
+                <div class="tech-tag">🤖 AI/ML</div>
+                <div class="tech-tag">🎨 HTML/CSS</div>
+                <div class="tech-tag">⚛️ JavaScript</div>
+                <div class="tech-tag">📚 PDF Processing</div>
+                <div class="tech-tag">🎙️ Text-to-Speech</div>
+                <div class="tech-tag">💾 Data Science</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

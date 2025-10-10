@@ -13,7 +13,7 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body { 
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
             background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
@@ -473,6 +473,40 @@
             
             renderSmartSummary();
         });
+
+        // Copy Smart Summary content
+        async function copySmart() {
+            try {
+                const btn = document.getElementById('copySmartBtn');
+                const container = document.getElementById('content');
+                const text = (container && container.innerText) ? container.innerText : '';
+                if (!text.trim()) return;
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(text);
+                } else {
+                    const ta = document.createElement('textarea');
+                    ta.value = text;
+                    ta.style.position = 'fixed';
+                    ta.style.left = '-9999px';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                }
+                if (btn) {
+                    const original = btn.innerHTML;
+                    btn.innerHTML = '<span>✅</span><span>Copied</span>';
+                    setTimeout(() => btn.innerHTML = original, 1500);
+                }
+            } catch (e) {
+                const btn = document.getElementById('copySmartBtn');
+                if (btn) {
+                    const original = btn.innerHTML;
+                    btn.innerHTML = '<span>⚠️</span><span>Failed</span>';
+                    setTimeout(() => btn.innerHTML = original, 1500);
+                }
+            }
+        }
     </script>
 </head>
 <body>
@@ -497,14 +531,16 @@
                     <button class="level-btn" data-level="1" onclick="changeLevel(1)" title="Quick Skim">1</button>
                     <button class="level-btn" data-level="2" onclick="changeLevel(2)" title="Solid Pass">2</button>
                     <button class="level-btn" data-level="3" onclick="changeLevel(3)" title="Comprehensive">3</button>
-    
                 </div>
+                <button class="download-btn" id="copySmartBtn" onclick="copySmart()">
+                    <span>📋</span>
+                    <span>Copy</span>
+                </button>
                 <button class="reload-btn hidden" id="reloadBtn" onclick="renderSmartSummary()">
                     <span>↻</span>
                     <span>Reload</span>
                 </button>
                 <button class="download-btn hidden" id="downloadBtn" onclick="downloadSmartPDF()">
-                    <span>📥</span>
                     <span>Download PDF</span>
                 </button>
             </div>

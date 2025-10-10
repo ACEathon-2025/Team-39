@@ -987,35 +987,134 @@
         }
 
         // Generate audio
-        async function generateAudio() {
-            document.getElementById('scriptPreview').classList.add('hidden');
-            document.getElementById('loadingState').classList.remove('hidden');
-            document.getElementById('loadingText').textContent = 'Generating podcast audio...';
-            try {
-                const response = await fetch('/api/text-to-speech', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ script: generatedScript })
-                });
-                const data = await response.json();
-                if (!response.ok) {
-                    const msg = data && data.error ? data.error : 'Text-to-speech failed';
-                    throw new Error(msg);
-                }
-                audioUrl = data.audioUrl;
-                const audio = document.getElementById('audioElement');
-                audio.src = audioUrl;
-                document.getElementById('loadingState').classList.add('hidden');
-                document.getElementById('audioPlayer').classList.remove('hidden');
-                currentAudio = audio;
-                setupAudioPlayer();
-            } catch (err) {
-                console.error(err);
-                alert('Failed to generate audio: ' + (err && err.message ? err.message : 'Unknown error'));
-                document.getElementById('loadingState').classList.add('hidden');
-                document.getElementById('scriptPreview').classList.remove('hidden');
-            }
+        // Fixed audio generation function for PODCAST MODE
+// Replace your existing generateAudio() function with this:
+
+// Generate audio - FIXED VERSION
+async function generateAudio() {
+    console.log('🎙️ Starting audio generation...');
+    
+    // Show loading immediately
+    document.getElementById('scriptPreview').classList.add('hidden');
+    document.getElementById('loadingState').classList.remove('hidden');
+    document.getElementById('loadingText').textContent = 'Generating audio...';
+    document.getElementById('loadingSubtext').textContent = 'Please wait, processing your script';
+    
+    try {
+        console.log('📤 Calling TTS API...');
+        
+        const startTime = Date.now();
+        
+        const response = await fetch('/api/text-to-speech', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ 
+                script: generatedScript,
+                voiceId: '21m00Tcm4TlvDq8ikWAM'
+            })
+        });
+        
+        const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+        console.log(`📥 Response received in ${elapsed}s`);
+        
+        const data = await response.json();
+        console.log('📥 Response data:', data);
+        
+        // ✅ CHECK if request failed
+        if (!response.ok) {
+            throw new Error(data.error || 'Text-to-speech failed');
         }
+        
+        // ✅ CHECK if audioUrl exists
+        if (!data.audioUrl) {
+            throw new Error('No audio URL returned from server');
+        }
+        
+        audioUrl = data.audioUrl;
+        console.log('✅ Audio file ready:', audioUrl);
+        
+        // Show the player
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('audioPlayer').classList.remove('hidden');
+        
+        // Set up the audio element
+        const audio = document.getElementById('audioElement');
+        audio.src = audioUrl + '?t=' + Date.now(); // Cache busting
+        currentAudio = audio;
+        
+        // Load and set up player
+        audio.load();
+        setupAudioPlayer();
+        
+        console.log('✅ Audio player initialized');
+        
+    } catch (err) {
+        console.error('❌ Error:', err);
+        alert('Failed to generate audio: ' + err.message);
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('scriptPreview').classList.remove('hidden');
+    }
+}
+// ALSO UPDATE setupAudioPlayer to be simpler:
+function setupAudioPlayer() {
+    const audio = document.getElementById('audioElement');
+    const progressFill = document.getElementById('progressFill');
+    const playBtn = document.getElementById('playPauseBtn');
+    
+    console.log('🎵 Setting up audio controls');
+    
+    // Update progress bar
+    audio.addEventListener('timeupdate', () => {
+        if (audio.duration && !isNaN(audio.duration)) {
+            const progress = (audio.currentTime / audio.duration) * 100;
+            progressFill.style.width = `${progress}%`;
+            document.getElementById('currentTime').textContent = formatTime(audio.currentTime);
+        }
+    });
+    
+    // Handle playback end
+    audio.addEventListener('ended', () => {
+        console.log('🎵 Playback ended');
+        isPlaying = false;
+        playBtn.textContent = '▶️';
+    });
+    
+    // Sync button state
+    audio.addEventListener('play', () => {
+        isPlaying = true;
+        playBtn.textContent = '⏸️';
+    });
+    
+    audio.addEventListener('pause', () => {
+        isPlaying = false;
+        playBtn.textContent = '▶️';
+    });
+    
+    console.log('✅ Audio controls ready');
+}
+
+// KEEP togglePlay the same:
+function togglePlay() {
+    const audio = document.getElementById('audioElement');
+    
+    if (!audio || !audio.src) {
+        console.error('❌ No audio loaded');
+        alert('Please wait for audio to load');
+        return;
+    }
+    
+    if (isPlaying) {
+        audio.pause();
+    } else {
+        audio.play().catch(err => {
+            console.error('❌ Play failed:', err);
+            alert('Cannot play audio yet. Please wait for it to load completely.');
+        });
+    }
+}
 
         // AUDIO PLAYER FUNCTIONS
         function setupAudioPlayer() {

@@ -384,6 +384,8 @@
             <div class="logo">🎓 Professor Mode</div>
             <div class="slide-counter" id="slideCounter">1 / 5</div>
             <div class="controls">
+                <input type="file" id="profPdfInput" accept="application/pdf" multiple style="display:none" />
+                <button class="control-btn" id="profPdfBtn" title="Upload PDFs">⤴️</button>
                 <button class="control-btn" id="playPauseBtn" onclick="togglePlayback()">⏸️</button>
                 <button class="control-btn" onclick="restartSlide()">🔄</button>
                 <button class="control-btn" onclick="goToScheduler()" title="Go to Scheduler">📅</button>
@@ -391,7 +393,7 @@
             </div>
         </div>
 
-        <div class="slide-container">
+        <div class="slide-container" id="slidesRoot">
             <!-- Slide 1: Introduction -->
             <div class="slide active" data-slide="0">
                 <div class="content-area">
@@ -542,14 +544,23 @@
         </div>
     </div>
 
+    <!-- Slide audio element (hidden) -->
+    <audio id="slideAudio" preload="auto" style="display:none;"></audio>
+
     <script>
         let currentSlide = 0;
         let currentSentence = 0;
         let isPlaying = true;
         let speakingInterval;
         let autoPlayInterval;
-        const totalSlides = 5;
-        const sentenceDuration = 2000; // 2 seconds per sentence
+        let totalSlides = 5;
+        const BASE_SENTENCE_DURATION = 2200; // default if audio duration unknown (~2.2s)
+        let currentSentenceDuration = BASE_SENTENCE_DURATION;
+        const AUDIO_BASE = '/static/test'; // adjust if your test folder differs
+        const AUDIO_EXT = '.mp3';
+        let audioEl;
+        let slidesData = null;
+        let currentSentenceDurations = [];
 
         // Initialize particles
         function createParticles() {
@@ -614,10 +625,11 @@
                 // Show speaking indicator
                 document.getElementById('speakingIndicator').classList.add('active');
                 
-                // Hide speaking indicator after sentence duration
+                // Hide speaking indicator after sentence duration (use currentSentenceDuration)
+                const hideDelay = Math.max(500, (currentSentenceDuration || 2000) - 500);
                 setTimeout(() => {
                     document.getElementById('speakingIndicator').classList.remove('active');
-                }, sentenceDuration - 500);
+                }, hideDelay);
             }
         }
 
@@ -629,11 +641,14 @@
             
             if (currentSentence < sentences.length) {
                 highlightSentence(currentSlide, currentSentence);
+                const thisDelay = Array.isArray(currentSentenceDurations) && currentSentenceDurations[currentSentence]
+                    ? currentSentenceDurations[currentSentence]
+                    : (currentSentenceDuration || BASE_SENTENCE_DURATION);
                 currentSentence++;
                 
                 autoPlayInterval = setTimeout(() => {
                     startAutoNarration();
-                }, sentenceDuration);
+                }, thisDelay);
             } else {
                 // Slide finished, pause or go to next
                 setTimeout(() => {
@@ -670,6 +685,16 @@
             updateProgressBar();
             updateNavigationButtons();
             
+            // Load and (optionally) play slide audio
+            loadSlideAudio(slideIndex);
+            // If audio metadata not yet ready, use base duration as fallback until updated
+            currentSentenceDuration = BASE_SENTENCE_DURATION;
+            if (isPlaying) {
+                safePlayAudio();
+            } else {
+                if (audioEl) audioEl.pause();
+            }
+
             // Start animations and narration
             animateVisualElements();
             setTimeout(() => {
@@ -700,10 +725,12 @@
             if (isPlaying) {
                 btn.textContent = '⏸️';
                 startAutoNarration();
+                safePlayAudio();
             } else {
                 btn.textContent = '▶️';
                 clearTimeout(autoPlayInterval);
                 document.getElementById('speakingIndicator').classList.remove('active');
+                if (audioEl) audioEl.pause();
             }
         }
 
@@ -716,9 +743,13 @@
                 sentence.classList.remove('highlighted');
             });
             
-            if (isPlaying) {
-                startAutoNarration();
+            // Restart audio to beginning
+            if (audioEl) {
+                audioEl.currentTime = 0;
+                if (isPlaying) safePlayAudio(); else audioEl.pause();
             }
+
+            if (isPlaying) startAutoNarration();
         }
 
         function goToScheduler() {
@@ -739,18 +770,103 @@
             } else if (e.key === 'ArrowLeft') {
                 e.preventDefault();
                 previousSlide();
-            } else if (e.key === 'r') {
+            } else if (e.key === 'r' || e.key === 'R') {
                 restartSlide();
-            } else if (e.key === 'p') {
+            } else if (e.key === 'p' || e.key === 'P') {
                 togglePlayback();
             }
         });
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            // Prepare audio element and events
+            audioEl = document.getElementById('slideAudio');
+            if (audioEl) {
+                audioEl.addEventListener('ended', () => {
+                    // When audio ends, proceed like after narration finishes
+                    if (currentSlide < totalSlides - 1 && isPlaying) {
+                        nextSlide();
+                    }
+                });
+                audioEl.addEventListener('loadedmetadata', () => {
+                    // When metadata loads, recompute per-sentence timing for current slide
+                    updateSentenceDurationFromAudio(currentSlide);
+                });
+            }
             createParticles();
             showSlide(0);
+            // Setup upload handler
+            const btn = document.getElementById('profPdfBtn');
+            const input = document.getElementById('profPdfInput');
+            if (btn && input) {
+                btn.addEventListener('click', () => input.click());
+                input.addEventListener('change', () => handleProfessorFiles(input.files));
+            }
         });
+        function loadSlideAudio(slideIndex) {
+            if (!audioEl) return;
+            const src = `${AUDIO_BASE}/${slideIndex + 1}${AUDIO_EXT}`;
+            if (audioEl.getAttribute('src') !== src) {
+                audioEl.setAttribute('src', src);
+                audioEl.load();
+            } else {
+                // Keep current buffer but reset time
+                audioEl.currentTime = 0;
+            }
+            // Try to update sentence duration immediately if metadata already known
+            updateSentenceDurationFromAudio(slideIndex);
+        }
+
+        function safePlayAudio() {
+            if (!audioEl) return;
+            const p = audioEl.play();
+            if (p && typeof p.then === 'function') {
+                p.catch(() => {/* ignore autoplay restrictions */});
+            }
+        }
+
+        function updateSentenceDurationFromAudio(slideIndex) {
+            try {
+                const slideEl = document.querySelector(`[data-slide="${slideIndex}"]`);
+                if (!slideEl) return;
+                const sentences = slideEl.querySelectorAll('.sentence');
+                const count = Math.max(1, sentences.length);
+                const durSec = audioEl && !isNaN(audioEl.duration) && audioEl.duration > 0 ? audioEl.duration : 0;
+
+                // Build weights by sentence length (words preferred, fallback to chars)
+                const lengths = Array.from(sentences).map(s => {
+                    const text = (s.innerText || s.textContent || '').trim();
+                    const words = text.split(/\s+/).filter(Boolean);
+                    return Math.max(1, words.length || Math.ceil(text.length / 6));
+                });
+                const totalLen = lengths.reduce((a,b) => a + b, 0) || count;
+
+                currentSentenceDurations = new Array(count).fill(BASE_SENTENCE_DURATION);
+
+                if (durSec > 0) {
+                    // Allocate total audio time proportionally to sentence length
+                    const totalMs = durSec * 1000;
+                    currentSentenceDurations = lengths.map(len => {
+                        const share = (len / totalLen) * totalMs;
+                        // Clamp each sentence to 1200–4500ms to avoid extremes
+                        return Math.max(1200, Math.min(4500, share));
+                    });
+                    // Also set a typical currentSentenceDuration for non-indexed uses
+                    currentSentenceDuration = Math.max(2000, Math.min(2500, totalMs / count));
+                } else {
+                    // No audio duration: heuristic per sentence based on words
+                    currentSentenceDurations = lengths.map(len => {
+                        // 120–160ms per word, clamped
+                        const ms = Math.round(len * 140);
+                        return Math.max(1200, Math.min(4500, ms));
+                    });
+                    currentSentenceDuration = BASE_SENTENCE_DURATION;
+                }
+            } catch (e) {
+                currentSentenceDuration = BASE_SENTENCE_DURATION;
+                currentSentenceDurations = [];
+            }
+        }
     </script>
 </body>
 </html>

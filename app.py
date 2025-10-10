@@ -17,6 +17,17 @@ from gtts import gTTS
 
 app = Flask(__name__)
 load_dotenv()
+from elevenlabs import ElevenLabs
+
+# Initialize ElevenLabs client (if API key exists)
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
+eleven_client = None
+if ELEVENLABS_API_KEY:
+    try:
+        eleven_client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
+        print("✅ ElevenLabs client initialized")
+    except Exception as e:
+        print(f"⚠️ ElevenLabs initialization failed: {e}")
 
 # ✅ Load Together API key from .env
 TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
@@ -63,12 +74,18 @@ def teacherv2():
 @app.route('/')
 def index():
     return render_template('v3.html')
-
-
 @app.route('/time')
 def time():
     return render_template('time.html')
 
+@app.route('/settings')
+def settings():
+    return render_template('settings.html')
+
+@app.route('/about')
+def about():
+    """Simple About Us page"""
+    return render_template('about.html')
 
 @app.route('/api/generate-professor-slides', methods=['POST'])
 def generate_professor_slides():
@@ -321,7 +338,7 @@ def generate_schedule():
         # Extract parameters
         exam_date = data.get('examDate', '')
         daily_hours = data.get('dailyHours', 2)
-        study_preference = data.get('studyPreference', 'balanced')  # theory-heavy, practice-heavy, balanced
+        study_preference = data.get('studyPreference', 'balanced')
         summary_text = data.get('summaryText', '')
         source_text = data.get('sourceText', '')
         
@@ -364,96 +381,198 @@ def generate_schedule():
         
         # AI prompt for schedule generation
         system_prompt = (
-            "You are an expert study planner AI. Create realistic, effective study schedules based on document content. "
-            "Output ONLY valid JSON, no markdown formatting, no extra text."
+            "You are an expert study planner AI that outputs ONLY valid JSON. "
+            "CRITICAL: Return pure JSON with NO markdown code blocks, NO explanations, NO extra text. "
+            "Start your response with { and end with }."
         )
         
-        user_prompt = f"""Create a detailed study schedule with this information:
+        user_prompt = f"""Create a study schedule. Output ONLY the JSON below (no ```json, no markdown):
 
 CONTENT TO STUDY:
-{context}
+{context[:3000]}
 
 CONSTRAINTS:
 - Exam date: {exam_date}
-- Daily available hours: {daily_hours}
-- Study preference: {study_preference}
+- Daily hours: {daily_hours}
+- Preference: {study_preference}
 
-Generate a JSON schedule with this EXACT structure:
+Required JSON structure (output THIS EXACT format):
 {{
-  "title": "AI Study Plan for [Subject]",
-  "totalTopics": [number],
+  "title": "Study Plan for [Subject from content]",
+  "totalTopics": 10,
   "examDate": "{exam_date}",
   "dailyHours": {daily_hours},
   "schedule": [
     {{
       "day": 1,
-      "date": "2025-10-09",
+      "date": "2025-10-11",
       "topics": [
         {{
-          "time": "10:00 AM - 11:00 AM",
-          "topic": "Topic Name",
-          "description": "Brief description",
+          "time": "9:00 AM - 10:00 AM",
+          "topic": "Introduction to Topic",
+          "description": "Cover basics",
           "type": "theory",
           "music": "lofi"
         }}
       ],
-      "goals": ["Goal 1", "Goal 2", "Goal 3"]
+      "goals": ["Master concept 1", "Practice problem set", "Review notes"]
     }}
   ],
   "cheatSheets": [
     {{
-      "title": "Quick Reference - Topic Name",
-      "content": "Key formulas, definitions, or concepts",
+      "title": "Quick Reference - Key Formulas",
+      "content": "Formula 1: description\\nFormula 2: description",
       "type": "formulas"
     }}
   ]
 }}
 
 RULES:
-1. Extract key topics from the document content
-2. Distribute topics across days leading up to exam date
-3. Balance theory (40%), practice (40%), and review (20%) for "balanced" preference
-4. Each day should have {daily_hours} hours total of study time
-5. Include realistic time slots (e.g., "10:00 AM - 11:00 AM")
-6. type can be: "theory", "practice", or "review"
-7. music can be: "lofi", "classical", "nature", "instrumental", or "focus"
-8. Create 3-5 daily goals per day
-9. Generate 3-5 cheat sheets with condensed key information
-10. Return ONLY the JSON, no markdown code blocks
+1. Extract 8-15 key topics from the content
+2. Create {max(3, min(14, (datetime.strptime(exam_date, '%Y-%m-%d') - datetime.now()).days))} days of schedule
+3. Each day: {daily_hours} total hours split across topics
+4. Use times like "9:00 AM - 10:00 AM"
+5. types: "theory", "practice", "review"
+6. music: "lofi", "classical", "nature", "instrumental", "focus"
+7. 3-5 goals per day
+8. 3-5 cheat sheets
+9. NO markdown, NO code blocks, ONLY JSON
 
-Output the complete JSON now:"""
+Start with {{ now:"""
 
         # Call Together AI (stable model and settings for JSON fidelity)
-        response = client.chat.completions.create(
-            model="openai/gpt-oss-20b",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            max_tokens=2500,
-            temperature=0.3
-        )
+        try:
+            response = client.chat.completions.create(
+                model="openai/gpt-oss-20b",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                max_tokens=2500,
+                temperature=0.3
+            )
+        except Exception as ai_error:
+            return jsonify({"error": f"AI model error: {str(ai_error)}"}), 500
         
         schedule_json_str = response.choices[0].message.content.strip()
+        
+        print(f"\n{'='*60}")
+        print("📅 SCHEDULE GENERATION DEBUG")
+        print(f"Response length: {len(schedule_json_str)} characters")
+        print(f"First 200 chars: {schedule_json_str[:200]}")
+        print(f"{'='*60}\n")
 
         # Robust JSON extraction using helper (handles code fences and trailing commas)
         schedule_data = extract_json_object(schedule_json_str)
+        
+        if not schedule_data:
+            # Try one more aggressive cleanup
+            try:
+                # Remove ALL markdown artifacts
+                cleaned = re.sub(r'```[a-z]*\n?', '', schedule_json_str)
+                cleaned = re.sub(r'\n```', '', cleaned)
+                cleaned = cleaned.strip()
+                
+                # Try to find JSON bounds more aggressively
+                start = cleaned.find('{')
+                end = cleaned.rfind('}')
+                
+                if start != -1 and end != -1:
+                    json_str = cleaned[start:end+1]
+                    # Fix common JSON issues
+                    json_str = re.sub(r',(\s*[}\]])', r'\1', json_str)  # Remove trailing commas
+                    json_str = re.sub(r'}\s*{', '},{', json_str)  # Fix missing commas between objects
+                    schedule_data = json.loads(json_str)
+            except Exception as parse_error:
+                print(f"❌ JSON parse failed: {str(parse_error)}")
+                
+                # FALLBACK: Generate a basic default schedule
+                print("⚠️ Using fallback schedule generation...")
+                
+                try:
+                    exam_dt = datetime.strptime(exam_date, '%Y-%m-%d')
+                    days_until_exam = max(3, min(14, (exam_dt - datetime.now()).days))
+                    
+                    # Create simple fallback schedule
+                    fallback_schedule = {
+                        "title": "AI Study Plan (Fallback Mode)",
+                        "totalTopics": 10,
+                        "examDate": exam_date,
+                        "dailyHours": daily_hours,
+                        "schedule": [],
+                        "cheatSheets": [
+                            {
+                                "title": "Quick Reference - Key Concepts",
+                                "content": "Review your document for key formulas and definitions",
+                                "type": "general"
+                            }
+                        ]
+                    }
+                    
+                    # Generate simple daily schedule
+                    start_date = datetime.now()
+                    for i in range(min(days_until_exam, 7)):
+                        day_date = start_date + timedelta(days=i)
+                        fallback_schedule["schedule"].append({
+                            "day": i + 1,
+                            "date": day_date.strftime('%Y-%m-%d'),
+                            "topics": [
+                                {
+                                    "time": "9:00 AM - 10:00 AM",
+                                    "topic": f"Study Session {i+1}",
+                                    "description": "Review key concepts from your materials",
+                                    "type": "theory" if i < 3 else "review",
+                                    "music": "lofi"
+                                }
+                            ],
+                            "goals": [
+                                "Review main concepts",
+                                "Practice problems",
+                                "Take notes"
+                            ]
+                        })
+                    
+                    print("✅ Fallback schedule generated")
+                    return jsonify(fallback_schedule)
+                    
+                except Exception as fallback_error:
+                    print(f"❌ Fallback also failed: {str(fallback_error)}")
+                    return jsonify({
+                        "error": "Failed to parse AI response as JSON",
+                        "details": str(parse_error),
+                        "raw_response": schedule_json_str[:1000],
+                        "hint": "AI returned malformed JSON. Try again or reduce content size."
+                    }), 500
+        
+        # Validate required fields
         if not schedule_data or 'schedule' not in schedule_data:
             return jsonify({
-                "error": "Failed to parse AI response as JSON",
+                "error": "Invalid schedule data structure",
+                "details": "Missing 'schedule' field in response",
+                "received_keys": list(schedule_data.keys()) if isinstance(schedule_data, dict) else "Not a dict",
                 "raw_response": schedule_json_str[:800]
             }), 500
+        
+        print(f"✅ Successfully generated schedule with {len(schedule_data.get('schedule', []))} days")
         
         return jsonify(schedule_data)
         
     except json.JSONDecodeError as e:
+        print(f"❌ JSON Decode Error: {str(e)}")
         return jsonify({
-            "error": "Failed to parse AI response as JSON",
+            "error": "AI returned invalid JSON format",
             "details": str(e),
-            "raw_response": schedule_json_str[:500] if 'schedule_json_str' in locals() else ""
+            "raw_response": schedule_json_str[:800] if 'schedule_json_str' in locals() else "No response captured",
+            "hint": "The AI model failed to generate proper JSON. Try uploading a smaller document or try again."
         }), 500
     except Exception as e:
-        return jsonify({"error": f"Schedule generation failed: {str(e)}"}), 500
+        print(f"❌ Schedule Generation Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "error": f"Schedule generation failed: {str(e)}",
+            "type": type(e).__name__
+        }), 500
 
 @app.route('/api/schedule', methods=['POST'])
 def schedule_api():
@@ -476,7 +595,7 @@ def generate_podcast_script():
         # Extract parameters
         summary_text = data.get('summaryText', '')
         source_text = data.get('sourceText', '')
-        duration = data.get('duration', 10)  # 10, 30, or 60 minutes
+        duration = data.get('duration', 5)  # default 5 minutes; supported: 3, 5, 10
         style = data.get('style', 'educational')
         pace = data.get('pace', 'normal')
         tone = data.get('tone', 'calm')
@@ -521,7 +640,8 @@ For single narrator, just write naturally without labels.
 
 Begin the script now:"""
 
-        max_tokens_map = {10: 2500, 30: 5000, 60: 8000}
+        # Token budget scaled for ~150 words/min
+        max_tokens_map = {3: 900, 5: 1500, 10: 2500}
         
         response = client.chat.completions.create(
             model="openai/gpt-oss-20b",
@@ -578,68 +698,75 @@ from elevenlabs import ElevenLabs
 
 # Initialize ElevenLabs client
 eleven_client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
+# REPLACE your /api/text-to-speech route with this OPTIMIZED version:
 
 @app.route('/api/text-to-speech', methods=['POST'])
 def text_to_speech():
-    """Convert podcast script to real audio using ElevenLabs TTS"""
+    """Convert podcast script to audio - FAST version"""
+    import time
+    start_time = time.time()
+    
     try:
         data = request.get_json(silent=True) or {}
         script = data.get('script', '')
-        # Prefer an explicit voiceId from the client; otherwise use env default
-        voice_id = data.get('voiceId') or os.getenv("ELEVENLABS_VOICE_ID")
-        model = data.get('model', 'eleven_turbo_v2')  # Stable and free-tier friendly
-
+        voice_id = data.get('voiceId', '21m00Tcm4TlvDq8ikWAM')
+        
         if not script:
             return jsonify({"error": "No script provided"}), 400
 
+        print(f"\n{'='*50}")
+        print(f"🎙️ TTS REQUEST RECEIVED")
+        print(f"Script length: {len(script)} characters")
+        print(f"Timestamp: {datetime.now().strftime('%H:%M:%S')}")
+        print(f"{'='*50}\n")
+
+        # Ensure directory exists
         os.makedirs("static/audio", exist_ok=True)
-
+        
+        # Generate filename immediately
+        filename = f"podcast_gtts_{int(datetime.now().timestamp())}.mp3"
+        filepath = os.path.join("static/audio", filename)
+        
+        # Use gTTS directly (it's faster and more reliable than ElevenLabs for testing)
+        print("🔊 Generating audio with gTTS...")
+        
         try:
-            if not voice_id:
-                raise RuntimeError("missing_voice_id")
-
-            # Try ElevenLabs first
-            audio = eleven_client.text_to_speech.convert(
-                voice_id=voice_id,
-                model_id=model,
-                text=script,
-                output_format="mp3_44100_128"
-            )
-
-            filename = f"podcast_{int(datetime.now().timestamp())}.mp3"
-            filepath = os.path.join("static/audio", filename)
-            with open(filepath, "wb") as f:
-                for chunk in audio:
-                    f.write(chunk)
-
+            # Generate the audio file
+            tts = gTTS(text=script, lang='en', slow=False)
+            tts.save(filepath)
+            
+            generation_time = time.time() - start_time
+            print(f"✅ Audio generated in {generation_time:.2f} seconds")
+            print(f"📁 File saved: {filepath}")
+            print(f"📊 File size: {os.path.getsize(filepath) / 1024:.1f} KB")
+            
             audio_url = f"/static/audio/{filename}"
+            
+            print(f"🌐 Audio URL: {audio_url}")
+            print(f"{'='*50}\n")
+            
             return jsonify({
-                "message": "TTS audio generated successfully.",
-                "script": script,
+                "message": "Audio generated successfully",
                 "audioUrl": audio_url,
-                "voiceId": voice_id,
-                "model": model
+                "filename": filename,
+                "generationTime": round(generation_time, 2),
+                "voiceId": "gtts",
+                "model": "gtts"
             })
-        except Exception as e:
-            # Fallback to gTTS if ElevenLabs fails (e.g., quota_exceeded or missing voice id)
-            try:
-                tts = gTTS(text=script)
-                filename = f"podcast_fallback_{int(datetime.now().timestamp())}.mp3"
-                filepath = os.path.join("static/audio", filename)
-                tts.save(filepath)
-                audio_url = f"/static/audio/{filename}"
-                return jsonify({
-                    "message": "TTS audio generated via fallback (gTTS).",
-                    "script": script,
-                    "audioUrl": audio_url,
-                    "voiceId": voice_id or "gtts",
-                    "model": "gtts"
-                })
-            except Exception as ge:
-                return jsonify({"error": f"TTS generation failed (fallback): {str(ge)}"}), 500
+            
+        except Exception as gtts_error:
+            print(f"❌ gTTS Error: {str(gtts_error)}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                "error": f"Audio generation failed: {str(gtts_error)}"
+            }), 500
 
     except Exception as e:
-        return jsonify({"error": f"TTS generation failed: {str(e)}"}), 500
+        print(f"❌ TTS Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"TTS failed: {str(e)}"}), 500
 
 
 @app.route('/api/save-podcast', methods=['POST'])
