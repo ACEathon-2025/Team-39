@@ -1200,37 +1200,45 @@
             <nav class="nav-items">
                 <input type="file" id="navFileInput" accept="application/pdf" multiple style="display:none" />
                 <div class="nav-item" id="navUploadBtn" title="Upload PDFs">
-                    <div class="nav-icon">⤴️</div>
-                    <div class="nav-label">Upload</div>
-                </div>
-                <div class="nav-item active" data-view="summary">
-                    <div class="nav-icon">📄</div>
-                    <div class="nav-label">Summary</div>
-                </div>
-                <div class="nav-item" data-view="professor" onclick="window.location.href='/teacher'">
-                    <div class="nav-icon">👨‍🏫</div>
-                    <div class="nav-label">Professor Mode</div>
-                </div>
-                <div class="nav-item" data-view="podcast" onclick="window.location.href='/podcast'">
-                    <div class="nav-icon">🎙️</div>
-                    <div class="nav-label">Podcast Mode</div>
-                </div>
-                <div class="nav-item" data-view="podcast" onclick="window.location.href='/res'">
-                    <div class="nav-icon">🎙️</div>
-                    <div class="nav-label">Reserch Pro</div>
-                </div>
-                <div class="nav-item" data-view="scheduler" onclick="window.location.href='/time'">
-    <div class="nav-icon">📅</div> <!-- Study Scheduler -->
+    <div class="nav-icon">📤</div>
+    <div class="nav-label">Upload</div>
+</div>
+
+<div class="nav-item active" data-view="summary">
+    <div class="nav-icon">🧾</div>
+    <div class="nav-label">Summary</div>
+</div>
+
+<div class="nav-item" data-view="professor" onclick="window.location.href='/teacher'">
+    <div class="nav-icon">👨‍🏫</div>
+    <div class="nav-label">Professor Mode</div>
+</div>
+
+<div class="nav-item" data-view="podcast" onclick="window.location.href='/podcast'">
+    <div class="nav-icon">🎧</div>
+    <div class="nav-label">Podcast Mode</div>
+</div>
+
+<div class="nav-item" data-view="research" onclick="window.location.href='/res'">
+    <div class="nav-icon">🧠</div>
+    <div class="nav-label">Research Pro</div>
+</div>
+
+<div class="nav-item" data-view="scheduler" onclick="window.location.href='/time'">
+    <div class="nav-icon">🗓️</div>
     <div class="nav-label">Study Scheduler</div>
 </div>
+
 <div class="nav-item" data-view="flash" onclick="window.location.href='/flash'">
-    <div class="nav-icon">🃏</div> <!-- Flashcards -->
+    <div class="nav-icon">💡</div>
     <div class="nav-label">Flashcards</div>
 </div>
-<div class="nav-item" data-view="flash" onclick="window.location.href='/cheatsheet'">
-    <div class="nav-icon">📖</div> <!-- Cheat Sheet -->
+
+<div class="nav-item" data-view="cheatsheet" onclick="window.location.href='/cheatsheet'">
+    <div class="nav-icon">📚</div>
     <div class="nav-label">Cheat Sheet</div>
 </div>
+
             </nav>
             <div class="nav-bottom" style="margin-top:auto; padding: 0.75rem 0; border-top: 1px solid var(--border-color);">
                 <div class="nav-item" data-view="about" onclick="window.location.href='/about'">
@@ -1250,12 +1258,14 @@
                     <div class="card summary-card">
                         <div class="card-header">
     <h1 class="card-title" id="summaryTitle">AI Summary</h1>
-    <div style="display:flex; gap:0.75rem; align-items:center;">
-        <span style="font-size:0.85rem; color: rgba(255,255,255,0.7); font-weight: 500;">Smart Summary:</span>
-        <div style="display:flex; gap:0.5rem;">
-            <button class="level-btn-small" onclick="openSmart(1)" title="Level 1 - Quick Skim">1</button>
-            <button class="level-btn-small" onclick="openSmart(2)" title="Level 2 - Solid Pass">2</button>
-            <button class="level-btn-small" onclick="openSmart(3)" title="Level 3 - Comprehensive">3</button>
+    <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap: wrap; justify-content: space-between;">
+        <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap: wrap;">
+            <span style="font-size:0.85rem; color: rgba(255,255,255,0.7); font-weight: 500;">Smart Summary:</span>
+            <div style="display:flex; gap:0.5rem;">
+                <button class="level-btn-small" onclick="openSmart(1)" title="Level 1 - Quick Skim">1</button>
+                <button class="level-btn-small" onclick="openSmart(2)" title="Level 2 - Solid Pass">2</button>
+                <button class="level-btn-small" onclick="openSmart(3)" title="Level 3 - Comprehensive">3</button>
+            </div>
         </div>
     </div>
 </div>

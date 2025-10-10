@@ -991,7 +991,7 @@
 // Replace your existing generateAudio() function with this:
 
 // Generate audio - FIXED VERSION
-// Generate audio - FIXED VERSION
+// Generate audio - IMPROVED VERSION
 async function generateAudio() {
     console.log('🎙️ Starting audio generation...');
     
@@ -1008,6 +1008,7 @@ async function generateAudio() {
     
     try {
         console.log('📤 Sending script to TTS API...');
+        console.log('Script preview:', generatedScript.substring(0, 100) + '...');
         
         const response = await fetch('/api/text-to-speech', {
             method: 'POST',
@@ -1016,42 +1017,69 @@ async function generateAudio() {
             },
             body: JSON.stringify({ 
                 script: generatedScript,
-                voiceId: '21m00Tcm4TlvDq8ikWAM'  // Optional
+                voiceId: '21m00Tcm4TlvDq8ikWAM'
             })
         });
         
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Audio generation failed');
+            const errorText = await response.text();
+            console.error('❌ TTS API Error Response:', errorText);
+            throw new Error(`Audio generation failed: ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('✅ Audio response:', data);
+        console.log('✅ TTS API Response:', data);
         
         if (!data.audioUrl) {
             throw new Error('No audio URL in response');
         }
         
         audioUrl = data.audioUrl;
+        console.log('🎵 Audio URL set to:', audioUrl);
         
-        // Hide loading, show player immediately
+        // Verify file exists before showing player
+        try {
+            const testResponse = await fetch(audioUrl, { method: 'HEAD' });
+            if (!testResponse.ok) {
+                throw new Error(`Audio file not accessible: ${testResponse.status}`);
+            }
+            console.log('✅ Audio file verified accessible');
+        } catch (fileError) {
+            console.error('❌ Audio file verification failed:', fileError);
+            throw new Error('Generated audio file is not accessible');
+        }
+        
+        // Hide loading, show player
         document.getElementById('loadingState').classList.add('hidden');
         document.getElementById('audioPlayer').classList.remove('hidden');
         
-        // Set up audio element
+        // Set up audio element with error handling
         const audio = document.getElementById('audioElement');
+        audio.onerror = (e) => {
+            console.error('❌ Audio element error:', e);
+            alert('Failed to load audio file. Please try regenerating.');
+        };
+        
+        audio.onloadstart = () => console.log('🎵 Audio loading started');
+        audio.oncanplay = () => console.log('✅ Audio ready to play');
+        
         audio.src = audioUrl;
         currentAudio = audio;
         
         // Set up player controls
         setupAudioPlayer();
         
-        // Update duration display
+        // Update duration display when metadata loads
         audio.addEventListener('loadedmetadata', () => {
-            document.getElementById('totalTime').textContent = formatTime(audio.duration);
+            const duration = formatTime(audio.duration);
+            document.getElementById('totalTime').textContent = duration;
+            console.log('✅ Audio duration loaded:', duration);
         });
         
-        console.log('✅ Audio player ready');
+        // Force load the audio
+        audio.load();
+        
+        console.log('✅ Audio player setup complete');
         
     } catch (error) {
         console.error('❌ Audio generation error:', error);
@@ -1097,25 +1125,124 @@ function setupAudioPlayer() {
     
     console.log('✅ Audio controls ready');
 }
-function togglePlay() {
-    const audio = document.getElementById('audioElement');
-    const playBtn = document.getElementById('playPauseBtn');
-    
-    if (!audio || !audio.src) {
-        alert('Please wait for audio to load');
-        return;
-    }
-    
-    if (isPlaying) {
-        audio.pause();
-    } else {
-        audio.play().catch(err => {
-            console.error('Playback error:', err);
-            alert('Cannot play audio. Please try again.');
-        });
-    }
-}
+        function togglePlay() {
+            const audio = document.getElementById('audioElement');
+            const playBtn = document.getElementById('playPauseBtn');
+            
+            if (!audio || !audio.src) {
+                alert('Please wait for audio to load');
+                return;
+            }
+            
+            if (isPlaying) {
+                audio.pause();
+            } else {
+                audio.play().catch(err => {
+                    console.error('Playback error:', err);
+                    alert('Cannot play audio. Please try again.');
+                });
+            }
+        }
+        
+        function skipForward() {
+            const audio = document.getElementById('audioElement');
+            if (audio && audio.duration) {
+                audio.currentTime = Math.min(audio.currentTime + 15, audio.duration);
+            }
+        }
+        
+        function skipBackward() {
+            const audio = document.getElementById('audioElement');
+            if (audio) {
+                audio.currentTime = Math.max(audio.currentTime - 15, 0);
+            }
+        }
+        
+        function setSpeed(speed) {
+            const audio = document.getElementById('audioElement');
+            if (audio) {
+                audio.playbackRate = speed;
+                
+                // Update active button
+                document.querySelectorAll('.speed-btn').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+            }
+        }
+        
+        function seekAudio(event) {
+            const audio = document.getElementById('audioElement');
+            const progressBar = event.currentTarget;
+            const rect = progressBar.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const width = rect.width;
+            const clickPercent = clickX / width;
+            
+            if (audio && audio.duration) {
+                audio.currentTime = clickPercent * audio.duration;
+            }
+        }
+        
+        function downloadAudio() {
+            if (audioUrl) {
+                const a = document.createElement('a');
+                a.href = audioUrl;
+                a.download = 'podcast.mp3';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } else {
+                alert('No audio available to download');
+            }
+        }
+        
+        function downloadTranscript() {
+            if (generatedScript) {
+                const blob = new Blob([generatedScript], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'podcast-script.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } else {
+                alert('No script available to download');
+            }
+        }
+        
+        function resetPodcast() {
+            // Stop and clear audio
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.src = '';
+            }
+            
+            // Reset variables
+            audioUrl = '';
+            generatedScript = '';
+            sourceText = '';
+            isPlaying = false;
+            
+            // Show setup panel
+            document.getElementById('audioPlayer').classList.add('hidden');
+            document.getElementById('scriptPreview').classList.add('hidden');
+            document.getElementById('setupPanel').classList.remove('hidden');
+            
+            // Reset file input
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileName').textContent = 'No file selected';
+            document.getElementById('generateScriptBtn').disabled = true;
+        }
 
+        // UTILITY FUNCTIONS
+        function formatTime(seconds) {
+            if (!seconds || isNaN(seconds)) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+        
         // AUDIO PLAYER FUNCTIONS
         function setupAudioPlayer() {
     const audio = document.getElementById('audioElement');

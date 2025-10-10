@@ -5,3 +5,5 @@ reportlab>=4.2.0
 together>=1.2.0
 gTTS>=2.5.1
 elevenlabs>=1.8.0
+requests>=2.31.0
+beautifulsoup4>=4.12.3

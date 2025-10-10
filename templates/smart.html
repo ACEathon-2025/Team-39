@@ -16,8 +16,8 @@
 
         body { 
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
-            color: #ffffff; 
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #2d1b4e 100%);
+            color: #f8f9fa; 
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -29,11 +29,11 @@
             width: 100%;
             max-width: 1000px;
             height: 85vh;
-            background: rgba(15, 20, 30, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(18, 18, 35, 0.92);
+            border: 1px solid rgba(168, 85, 247, 0.25);
             border-radius: 1.5rem;
             overflow: hidden;
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 30px 80px rgba(88, 28, 135, 0.4), 0 0 100px rgba(168, 85, 247, 0.1);
             backdrop-filter: blur(20px);
             display: flex;
             flex-direction: column;
@@ -52,8 +52,8 @@
         }
         
         .window-header {
-            background: linear-gradient(135deg, rgba(153, 69, 255, 0.2), rgba(0, 212, 255, 0.2));
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.15));
+            border-bottom: 1px solid rgba(168, 85, 247, 0.2);
             padding: 1.5rem 2rem;
             display: flex;
             align-items: center;
@@ -81,7 +81,7 @@
         .title { 
             font-size: 1.5rem; 
             font-weight: 700; 
-            background: linear-gradient(135deg, #9945ff 0%, #00d4ff 100%); 
+            background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%); 
             -webkit-background-clip: text; 
             background-clip: text; 
             -webkit-text-fill-color: transparent;
@@ -93,15 +93,16 @@
             align-items: center;
             gap: 1rem;
             font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(226, 232, 240, 0.7);
         }
         
         .level-badge {
-            background: rgba(153, 69, 255, 0.3);
+            background: rgba(139, 92, 246, 0.25);
             padding: 0.25rem 0.75rem;
             border-radius: 1rem;
             font-weight: 600;
-            color: #9945ff;
+            color: #c4b5fd;
+            border: 1px solid rgba(168, 85, 247, 0.3);
         }
         
         .header-actions {
@@ -113,18 +114,19 @@
         .level-buttons {
             display: flex;
             gap: 0.5rem;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(30, 27, 75, 0.4);
             padding: 0.5rem;
             border-radius: 1rem;
+            border: 1px solid rgba(139, 92, 246, 0.2);
         }
 
         .level-btn {
             width: 36px;
             height: 36px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(30, 27, 75, 0.5);
+            border: 1px solid rgba(168, 85, 247, 0.3);
             border-radius: 0.5rem;
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(226, 232, 240, 0.7);
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -134,23 +136,25 @@
         }
 
         .level-btn:hover {
-            background: rgba(153, 69, 255, 0.3);
-            color: #9945ff;
+            background: rgba(139, 92, 246, 0.3);
+            color: #c4b5fd;
+            border-color: rgba(168, 85, 247, 0.5);
             transform: translateY(-2px);
         }
 
         .level-btn.active {
-            background: linear-gradient(135deg, #9945ff, #00d4ff);
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6);
             color: white;
             border-color: transparent;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
         }
 
         .reload-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(30, 27, 75, 0.5);
+            border: 1px solid rgba(139, 92, 246, 0.3);
             border-radius: 0.75rem;
             padding: 0.75rem 1rem;
-            color: #fff;
+            color: #e2e8f0;
             font-weight: 600;
             font-size: 0.95rem;
             cursor: pointer;
@@ -161,16 +165,17 @@
         }
 
         .reload-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(139, 92, 246, 0.3);
+            border-color: rgba(168, 85, 247, 0.5);
             transform: translateY(-2px);
         }
         
         .download-btn {
-            background: linear-gradient(135deg, #9945ff, #00d4ff);
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6);
             border: none;
             border-radius: 0.75rem;
             padding: 0.75rem 1.5rem;
-            color: #fff;
+            color: #ffffff;
             font-weight: 600;
             font-size: 0.95rem;
             cursor: pointer;
@@ -178,12 +183,12 @@
             align-items: center;
             gap: 0.5rem;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(153, 69, 255, 0.4);
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
         }
         
         .download-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(153, 69, 255, 0.6);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
         }
         
         .download-btn:active {
@@ -194,7 +199,7 @@
             flex: 1;
             overflow-y: auto;
             padding: 2.5rem;
-            background: rgba(10, 15, 25, 0.5);
+            background: rgba(15, 15, 30, 0.6);
         }
         
         .window-content::-webkit-scrollbar {
@@ -202,23 +207,23 @@
         }
         
         .window-content::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(30, 27, 75, 0.3);
         }
         
         .window-content::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #9945ff, #00d4ff);
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6);
             border-radius: 5px;
         }
         
         .content { 
             line-height: 1.8;
-            color: rgba(255, 255, 255, 0.9);
+            color: rgba(226, 232, 240, 0.95);
         }
         
         .content h1 { 
             font-size: 2rem;
             margin: 2rem 0 1rem 0;
-            background: linear-gradient(135deg, #9945ff 0%, #00d4ff 100%);
+            background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -228,20 +233,20 @@
         .content h2 { 
             font-size: 1.5rem;
             margin: 1.5rem 0 0.75rem 0;
-            color: #00d4ff;
+            color: #60a5fa;
             font-weight: 600;
         }
         
         .content h3 { 
             font-size: 1.2rem;
             margin: 1.25rem 0 0.5rem 0;
-            color: #9945ff;
+            color: #a78bfa;
             font-weight: 600;
         }
         
         .content p { 
             margin: 1rem 0;
-            color: rgba(255, 255, 255, 0.85);
+            color: rgba(226, 232, 240, 0.9);
         }
         
         .content ul { 
@@ -250,20 +255,21 @@
         
         .content li { 
             margin: 0.5rem 0;
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(226, 232, 240, 0.85);
         }
         
         .content strong {
-            color: #00d4ff;
+            color: #93c5fd;
             font-weight: 600;
         }
         
         .content code {
-            background: rgba(153, 69, 255, 0.2);
+            background: rgba(139, 92, 246, 0.2);
             padding: 0.2rem 0.5rem;
             border-radius: 0.5rem;
             font-family: 'Courier New', monospace;
-            color: #9945ff;
+            color: #c4b5fd;
+            border: 1px solid rgba(168, 85, 247, 0.3);
         }
         
         .loading {
@@ -277,8 +283,8 @@
         .spinner {
             width: 50px;
             height: 50px;
-            border: 4px solid rgba(153, 69, 255, 0.2);
-            border-top-color: #9945ff;
+            border: 4px solid rgba(139, 92, 246, 0.2);
+            border-top-color: #8b5cf6;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -288,9 +294,9 @@
         }
         
         .error {
-            color: #ff6b6b;
-            background: rgba(255, 107, 107, 0.1);
-            border: 1px solid rgba(255, 107, 107, 0.3);
+            color: #fca5a5;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
             padding: 1.5rem;
             border-radius: 1rem;
             text-align: center;

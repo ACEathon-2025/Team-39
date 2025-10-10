@@ -13,6 +13,7 @@ import re
 import json
 from datetime import datetime, timedelta
 from gtts import gTTS
+import requests
 
 
 app = Flask(__name__)
@@ -702,6 +703,183 @@ from elevenlabs import ElevenLabs
 
 # Initialize ElevenLabs client
 eleven_client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
+@app.route('/api/download-flashcards', methods=['POST'])
+def download_flashcards():
+    """Generate and download flashcards as a beautifully formatted PDF"""
+    try:
+        data = request.get_json(silent=True) or {}
+        flashcards = data.get('flashcards', [])
+        title = data.get('title', 'Study Flashcards')
+        
+        if not flashcards:
+            return jsonify({"error": "No flashcards provided"}), 400
+        
+        # Create PDF in memory
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            buffer, 
+            pagesize=letter,
+            topMargin=0.75*inch, 
+            bottomMargin=0.75*inch,
+            leftMargin=0.75*inch, 
+            rightMargin=0.75*inch
+        )
+        
+        from reportlab.lib.colors import HexColor, black, whitesmoke
+        from reportlab.lib.enums import TA_CENTER, TA_LEFT
+        from reportlab.platypus import Table, TableStyle, PageBreak
+        
+        styles = getSampleStyleSheet()
+        
+        # Title style
+        title_style = ParagraphStyle(
+            'FlashcardTitle',
+            parent=styles['Heading1'],
+            fontSize=22,
+            textColor=HexColor('#1e40af'),
+            spaceAfter=30,
+            alignment=TA_CENTER,
+            fontName='Helvetica-Bold'
+        )
+        
+        # Card number style
+        card_num_style = ParagraphStyle(
+            'CardNumber',
+            parent=styles['Normal'],
+            fontSize=10,
+            textColor=HexColor('#6b7280'),
+            spaceAfter=8,
+            fontName='Helvetica-Bold'
+        )
+        
+        # Question style
+        question_style = ParagraphStyle(
+            'Question',
+            parent=styles['Heading2'],
+            fontSize=14,
+            textColor=HexColor('#1f2937'),
+            spaceAfter=12,
+            fontName='Helvetica-Bold'
+        )
+        
+        # Answer style
+        answer_style = ParagraphStyle(
+            'Answer',
+            parent=styles['BodyText'],
+            fontSize=11,
+            leading=16,
+            spaceAfter=20,
+            fontName='Helvetica',
+            textColor=HexColor('#374151')
+        )
+        
+        # Category/hint style
+        meta_style = ParagraphStyle(
+            'Meta',
+            parent=styles['Normal'],
+            fontSize=9,
+            textColor=HexColor('#9ca3af'),
+            spaceAfter=6,
+            fontName='Helvetica-Oblique'
+        )
+        
+        # Helper function
+        def clean_text(text):
+            from xml.sax.saxutils import escape as xml_escape
+            text = xml_escape(str(text))
+            text = re.sub(r"\*\*(.*?)\*\*", r"<b>\1</b>", text)
+            text = re.sub(r"`([^`]+)`", r"<font face='Courier'>\1</font>", text)
+            return text
+        
+        # Build PDF content
+        story = []
+        
+        # Title page
+        story.append(Paragraph(clean_text(title), title_style))
+        story.append(Paragraph(f"Total Flashcards: {len(flashcards)}", meta_style))
+        story.append(Spacer(1, 0.5*inch))
+        
+        # Group by category for better organization
+        from collections import defaultdict
+        cards_by_category = defaultdict(list)
+        for card in flashcards:
+            category = card.get('category', 'General')
+            cards_by_category[category].append(card)
+        
+        # Generate flashcards
+        for category, cards in cards_by_category.items():
+            # Category header
+            category_style = ParagraphStyle(
+                'Category',
+                parent=styles['Heading2'],
+                fontSize=16,
+                textColor=HexColor('#2563eb'),
+                spaceAfter=16,
+                spaceBefore=24,
+                fontName='Helvetica-Bold'
+            )
+            story.append(Paragraph(f"📚 {clean_text(category)}", category_style))
+            story.append(Spacer(1, 0.2*inch))
+            
+            for card in cards:
+                # Card number and difficulty
+                card_id = card.get('id', '?')
+                difficulty = card.get('difficulty', 'medium')
+                difficulty_emoji = {'easy': '🟢', 'medium': '🟡', 'hard': '🔴'}.get(difficulty, '⚪')
+                
+                story.append(Paragraph(
+                    f"Card #{card_id} {difficulty_emoji} {difficulty.capitalize()}", 
+                    card_num_style
+                ))
+                
+                # Question (with box)
+                question = card.get('question', 'No question')
+                story.append(Paragraph(f"<b>Q:</b> {clean_text(question)}", question_style))
+                
+                # Hint (if exists)
+                hint = card.get('hint', '').strip()
+                if hint:
+                    story.append(Paragraph(f"💡 Hint: {clean_text(hint)}", meta_style))
+                    story.append(Spacer(1, 0.1*inch))
+                
+                # Answer (with subtle background)
+                answer = card.get('answer', 'No answer')
+                
+                # Create a simple table for the answer box
+                answer_para = Paragraph(f"<b>A:</b> {clean_text(answer)}", answer_style)
+                answer_table = Table([[answer_para]], colWidths=[6.5*inch])
+                answer_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, -1), HexColor('#f3f4f6')),
+                    ('PADDING', (0, 0), (-1, -1), 12),
+                    ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                    ('LEFTPADDING', (0, 0), (-1, -1), 15),
+                    ('RIGHTPADDING', (0, 0), (-1, -1), 15),
+                ]))
+                story.append(answer_table)
+                
+                # Separator
+                story.append(Spacer(1, 0.3*inch))
+        
+        # Build PDF
+        doc.build(story)
+        buffer.seek(0)
+        
+        # Generate filename
+        safe_title = re.sub(r'[^\w\s-]', '', title).strip().replace(' ', '_')
+        filename = f'{safe_title}_Flashcards.pdf'
+        
+        return send_file(
+            buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        print(f"Flashcard PDF generation error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Flashcard PDF generation failed: {str(e)}"}), 500
 
 @app.route('/api/text-to-speech', methods=['POST'])
 def text_to_speech():
@@ -798,7 +976,7 @@ def save_podcast():
         return jsonify({"error": f"Failed to save podcast: {str(e)}"}), 500
 @app.route('/api/download-cheatsheet', methods=['POST'])
 def download_cheatsheet():
-    """Generate and download a cheat sheet PDF"""
+    """Generate and download a cheat sheet PDF with improved formatting"""
     try:
         data = request.get_json(silent=True) or {}
         title = data.get('title', 'Study Cheat Sheet')
@@ -807,56 +985,132 @@ def download_cheatsheet():
         if not content:
             return jsonify({"error": "No content provided"}), 400
         
-        # Create PDF in memory
+        # Create PDF in memory with better margins
         buffer = BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter,
-                              topMargin=0.5*inch, bottomMargin=0.5*inch,
-                              leftMargin=0.5*inch, rightMargin=0.5*inch)
+                              topMargin=0.75*inch, bottomMargin=0.75*inch,
+                              leftMargin=0.75*inch, rightMargin=0.75*inch)
         
-        # Styles
+        # Import required classes
+        from reportlab.lib.colors import black, darkblue, darkgreen
+        from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
+        
         styles = getSampleStyleSheet()
+        
+        # Enhanced title style
         title_style = ParagraphStyle(
             'CustomTitle',
             parent=styles['Heading1'],
-            fontSize=18,
-            textColor='#2563eb',
-            spaceAfter=12,
-            alignment=TA_LEFT
+            fontSize=20,
+            textColor=black,
+            spaceAfter=20,
+            spaceBefore=10,
+            alignment=TA_CENTER,
+            fontName='Helvetica-Bold'
         )
         
+        # Heading style for sections
+        heading_style = ParagraphStyle(
+            'CustomHeading',
+            parent=styles['Heading2'],
+            fontSize=14,
+            textColor=black,
+            spaceAfter=12,
+            spaceBefore=16,
+            alignment=TA_LEFT,
+            fontName='Helvetica-Bold'
+        )
+        
+        # Body text style
         body_style = ParagraphStyle(
             'CustomBody',
             parent=styles['BodyText'],
+            fontSize=11,
+            leading=16,
+            spaceAfter=8,
+            spaceBefore=4,
+            alignment=TA_JUSTIFY,
+            fontName='Helvetica',
+            textColor=black
+        )
+        
+        # List style for bullet points
+        list_style = ParagraphStyle(
+            'CustomList',
+            parent=styles['BodyText'],
             fontSize=10,
             leading=14,
-            spaceAfter=6
+            spaceAfter=6,
+            spaceBefore=2,
+            leftIndent=20,
+            bulletIndent=10,
+            fontName='Helvetica',
+            textColor=black
         )
         
         # Build PDF content
         story = []
         story.append(Paragraph(title, title_style))
-        story.append(Spacer(1, 0.2*inch))
+        story.append(Spacer(1, 0.3*inch))
         
-        # Split content into paragraphs and add to PDF
-        for paragraph in content.split('\n\n'):
-            if paragraph.strip():
-                # Handle markdown-style bold
-                paragraph = paragraph.replace('**', '<b>').replace('**', '</b>')
-                story.append(Paragraph(paragraph.strip(), body_style))
-                story.append(Spacer(1, 0.1*inch))
+        # Process content with better formatting
+        sections = content.split('\n\n')
+        for section in sections:
+            if section.strip():
+                # Handle different content types
+                lines = section.strip().split('\n')
+                
+                for line in lines:
+                    line = line.strip()
+                    if not line:
+                        continue
+                        
+                    # Handle headers (## or **bold text**:)
+                    if line.startswith('##') or (line.startswith('**') and line.endswith(':**')):
+                        header_text = line.replace('##', '').replace('**', '').replace(':', '').strip()
+                        story.append(Paragraph(header_text, heading_style))
+                    
+                    # Handle bullet points
+                    elif line.startswith('- ') or line.startswith('• '):
+                        bullet_text = line[2:].strip()
+                        # Clean up markdown formatting
+                        bullet_text = bullet_text.replace('**', '<b>').replace('**', '</b>')
+                        bullet_text = bullet_text.replace('*', '<i>').replace('*', '</i>')
+                        story.append(Paragraph(f'• {bullet_text}', list_style))
+                    
+                    # Handle numbered lists
+                    elif line.split('.')[0].strip().isdigit():
+                        story.append(Paragraph(line, list_style))
+                    
+                    # Handle regular paragraphs
+                    else:
+                        # Clean up markdown formatting
+                        line = line.replace('**', '<b>').replace('**', '</b>')
+                        line = line.replace('*', '<i>').replace('*', '</i>')
+                        story.append(Paragraph(line, body_style))
+                
+                story.append(Spacer(1, 0.15*inch))
         
-        # Build PDF
-        doc.build(story)
+        # Build PDF with proper error handling
+        try:
+            doc.build(story)
+        except Exception as build_error:
+            print(f"PDF build error: {str(build_error)}")
+            return jsonify({"error": f"PDF generation failed: {str(build_error)}"}), 500
+            
         buffer.seek(0)
         
         return send_file(
             buffer,
             mimetype='application/pdf',
             as_attachment=True,
-            download_name=f'{title.replace(" ", "_")}.pdf'
+            download_name=f'{title.replace(" ", "_").replace("/", "_")}.pdf'
         )
         
     except Exception as e:
+        print(f"Cheat sheet generation error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": f"Cheat sheet generation failed: {str(e)}"}), 500
 # Add these routes to your app.py file
 
@@ -967,6 +1221,9 @@ Output the complete JSON now:"""
             max_tokens=3500,
             temperature=0.6
         )
+        print(response.choices[0].message.content)
+
+
         
         flashcards_json_str = response.choices[0].message.content.strip()
         
@@ -2196,8 +2453,15 @@ Generate the complete research paper now following ALL guidelines above. Make it
             as_attachment=True,
             download_name=filename
         )
-        
+
     except Exception as e:
         import traceback
         traceback.print_exc()
         return jsonify({"error": f"PDF generation failed: {str(e)}"}), 500
+
+
+if __name__ == "__main__":
+    # Start the Flask development server when running this file directly
+    # Example: Running will print the link like: http://127.0.0.1:5000
+    port = int(os.getenv("PORT", 5000))
+    app.run(host="127.0.0.1", port=port, debug=True)

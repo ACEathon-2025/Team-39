@@ -156,3 +156,89 @@ F --> G[Continuous Progress Feedback]
 **Prototype:** [OuchMyBrain.io](#)  
 
 > “Study smarter. Retain longer. Learn anywhere.”
+
+---
+
+## 🧪 New: Research Generator & PDF Exports
+
+- **Research Paper Generator** with optional web intelligence.
+  - Routes:
+    - `GET /research` — research UI page.
+    - `POST /api/web-research` — fetch credible web sources via DuckDuckGo HTML + BeautifulSoup.
+    - `POST /api/generate-research-paper` — generate a comprehensive paper (Markdown) using Together AI LLMs.
+- **PDF Export Endpoints**
+  - `POST /api/download-cheatsheet` — generate a clean cheat sheet PDF from text.
+  - `POST /api/download-ultimate-cheatsheet` — enhanced styling and markdown-like support.
+  - `POST /api/download-flashcards` — export AI-generated flashcards as a formatted PDF.
+  - (Optional) `POST /api/download-research-pdf` — recommended endpoint to export the research paper content to a styled PDF if/when added.
+
+### Example: Web Research Request
+
+```bash
+curl -X POST http://localhost:5000/api/web-research \
+  -H "Content-Type: application/json" \
+  -d '{"query":"Large Language Models safety best practices","depth":5}'
+```
+
+### Example: Generate Research Paper
+
+```bash
+curl -X POST http://localhost:5000/api/generate-research-paper \
+  -H "Content-Type: application/json" \
+  -d '{
+    "topic": "Reinforcement Learning",
+    "description": "Intro + recent advances",
+    "revolvesAround": "Policy gradients, model-based RL",
+    "relatedTopics": "Bandits, offline RL",
+    "pdfContent": "(optional content extracted from uploads)",
+    "webSources": []
+  }'
+```
+
+### Example: Download Flashcards PDF
+
+```bash
+curl -X POST http://localhost:5000/api/download-flashcards \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Algebra Basics",
+    "flashcards": [
+      {"id":1, "question":"What is a group?", "answer":"A set with an associative binary operation, identity, and inverses.", "category":"Abstract Algebra", "difficulty":"easy", "hint":"Think closure + axioms"}
+    ]
+  }' --output Algebra_Basics_Flashcards.pdf
+```
+
+---
+
+## 🧰 Updated Tech Stack
+
+- **Backend**: `Flask`
+- **LLM Access**: `together` (Together AI SDK) for models like Meta Llama.
+- **PDF Generation**: `reportlab` for all PDF exports (cheat sheets, flashcards, research).
+- **Parsing & Research**: `beautifulsoup4` + `requests` for web results parsing.
+- **PDF/Text Extraction**: `PyMuPDF`.
+- **Text-to-Speech**: `elevenlabs`, `gTTS` as fallback.
+- **Env Management**: `python-dotenv`.
+
+### Environment Variables
+
+- `TOGETHER_API_KEY` — required for research paper generation via Together AI.
+- `ELEVENLABS_API_KEY` — required for ElevenLabs TTS.
+- Optional standard Flask variables: `FLASK_ENV`, `PORT`.
+
+---
+
+## ▶️ Run Locally
+
+```bash
+pip install -r requirements.txt
+python app.py
+# App runs at http://127.0.0.1:5000
+```
+
+---
+
+## Notes
+
+- If you experience any PDF errors, ensure you are on a recent `reportlab` version (see `requirements.txt`).
+- Web research uses public HTML search; results may vary by region and connectivity.
