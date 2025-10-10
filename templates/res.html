@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Re:Search AI - Intelligent Research Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff; 
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header Section */
+        .header {
+            background: rgba(20, 25, 40, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .brand-icon {
+            font-size: 2.5rem;
+        }
+
+        .brand-text h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00d4ff 0%, #9945ff 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-text p {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 0.25rem;
+        }
+
+        .home-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .home-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        /* Input Section */
+        .input-section {
+            background: rgba(20, 25, 40, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.6s ease;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #00d4ff;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.95rem;
+        }
+
+        .form-label .icon {
+            margin-right: 0.5rem;
+            color: #9945ff;
+        }
+
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 0.75rem;
+            padding: 0.875rem 1rem;
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.05);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Upload Area */
+        .upload-area {
+            border: 2px dashed rgba(153, 69, 255, 0.5);
+            border-radius: 1rem;
+            padding: 3rem 2rem;
+            text-align: center;
+            background: rgba(153, 69, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #9945ff;
+            background: rgba(153, 69, 255, 0.1);
+            transform: scale(1.01);
+        }
+
+        .upload-area.drag-over {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #9945ff;
+        }
+
+        .file-list {
+            margin-top: 1rem;
+            text-align: left;
+        }
+
+        .file-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .file-item button {
+            background: rgba(255, 107, 107, 0.2);
+            border: none;
+            color: #ff6b6b;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        /* Depth Selector */
+        .depth-selector {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .depth-option {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .depth-option:hover {
+            background: rgba(153, 69, 255, 0.1);
+            border-color: #9945ff;
+        }
+
+        .depth-option.active {
+            background: linear-gradient(135deg, rgba(153, 69, 255, 0.3), rgba(0, 212, 255, 0.3));
+            border-color: #00d4ff;
+        }
+
+        .depth-option .icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .depth-option .title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .depth-option .desc {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Generate Button */
+        .generate-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #00d4ff, #9945ff);
+            border: none;
+            border-radius: 1rem;
+            padding: 1.25rem 2rem;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.4);
+            margin-top: 2rem;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0, 212, 255, 0.6);
+        }
+
+        .generate-btn:active {
+            transform: translateY(0);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Output Section */
+        .output-section {
+            background: rgba(20, 25, 40, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            padding: 0;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.7s ease;
+            overflow: hidden;
+        }
+
+        .output-header {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(153, 69, 255, 0.2));
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .output-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .output-title h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00d4ff, #9945ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .output-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .action-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1.25rem;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, #00d4ff, #9945ff);
+            border: none;
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .action-btn.primary:hover {
+            box-shadow: 0 6px 20px rgba(0, 212, 255, 0.5);
+        }
+
+        .output-content {
+            padding: 2.5rem;
+            max-height: 70vh;
+            overflow-y: auto;
+            background: rgba(10, 15, 25, 0.5);
+        }
+
+        .output-content::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .output-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .output-content::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #00d4ff, #9945ff);
+            border-radius: 5px;
+        }
+
+        /* Markdown Styling */
+        .markdown-content h1 {
+            font-size: 2rem;
+            margin: 2rem 0 1rem 0;
+            background: linear-gradient(135deg, #00d4ff, #9945ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+
+        .markdown-content h2 {
+            font-size: 1.5rem;
+            margin: 1.5rem 0 0.75rem 0;
+            color: #00d4ff;
+            font-weight: 600;
+        }
+
+        .markdown-content h3 {
+            font-size: 1.2rem;
+            margin: 1.25rem 0 0.5rem 0;
+            color: #9945ff;
+            font-weight: 600;
+        }
+
+        .markdown-content p {
+            margin: 1rem 0;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .markdown-content ul,
+        .markdown-content ol {
+            margin: 1rem 0 1rem 1.5rem;
+        }
+
+        .markdown-content li {
+            margin: 0.5rem 0;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .markdown-content strong {
+            color: #00d4ff;
+            font-weight: 600;
+        }
+
+        .markdown-content code {
+            background: rgba(0, 212, 255, 0.15);
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.5rem;
+            font-family: 'Courier New', monospace;
+            color: #00d4ff;
+            font-size: 0.9em;
+        }
+
+        .markdown-content blockquote {
+            border-left: 3px solid #9945ff;
+            padding-left: 1rem;
+            margin: 1rem 0;
+            font-style: italic;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .markdown-content hr {
+            border: none;
+            border-top: 2px solid rgba(0, 212, 255, 0.3);
+            margin: 2rem 0;
+        }
+
+        .markdown-content a {
+            color: #00d4ff;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .markdown-content a:hover {
+            border-bottom-color: #00d4ff;
+        }
+
+        /* Loading State */
+        .loading-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(0, 212, 255, 0.2);
+            border-top-color: #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #9945ff);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Error State */
+        .error-message {
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            color: #ff6b6b;
+            text-align: center;
+        }
+
+        /* Web Sources */
+        .sources-section {
+            background: rgba(0, 212, 255, 0.05);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .source-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .source-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(5px);
+        }
+
+        .source-title {
+            font-weight: 600;
+            color: #00d4ff;
+            margin-bottom: 0.5rem;
+        }
+
+        .source-snippet {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+        }
+
+        .source-url {
+            font-size: 0.85rem;
+            color: #9945ff;
+            margin-top: 0.5rem;
+            word-break: break-all;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .header,
+            .input-section,
+            .output-section {
+                padding: 1.5rem;
+            }
+
+            .brand-text h1 {
+                font-size: 1.5rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .depth-selector {
+                flex-direction: column;
+            }
+
+            .output-actions {
+                flex-wrap: wrap;
+            }
+
+            .action-btn {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-top">
+                <div class="brand">
+                    <div class="brand-icon">🧠</div>
+                    <div class="brand-text">
+                        <h1>Re:Search AI</h1>
+                        <p>AI-Powered Intelligent Research Paper Generator</p>
+                    </div>
+                </div>
+                <a href="/" class="home-btn">
+                    <span>🏠</span>
+                    <span>Home</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="input-section">
+            <h2 class="section-title">
+                <span>💡</span>
+                Research Configuration
+            </h2>
+
+            <!-- Topic Input -->
+            <div class="form-group">
+                <label class="form-label">
+                    <span class="icon">📌</span>
+                    Main Research Topic *
+                </label>
+                <input type="text" id="topicInput" class="form-input" 
+                    placeholder="e.g., Quantum Encryption & AI Integration">
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+                <label class="form-label">
+                    <span class="icon">📝</span>
+                    Topic Description
+                </label>
+                <textarea id="descriptionInput" class="form-textarea" 
+                    placeholder="Provide a brief overview of what you want to research..."></textarea>
+            </div>
+
+            <!-- Grid Layout for Related Fields -->
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">
+                        <span class="icon">🎯</span>
+                        Key Focus Areas
+                    </label>
+                    <textarea id="revolvesInput" class="form-textarea" 
+                        placeholder="What does it revolve around? Core concepts..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <span class="icon">⚙️</span>
+                        How It Works
+                    </label>
+                    <textarea id="howWorksInput" class="form-textarea" 
+                        placeholder="Mechanisms, processes, technical details..."></textarea>
+                </div>
+            </div>
+
+            <!-- Related Topics -->
+            <div class="form-group">
+                <label class="form-label">
+                    <span class="icon">🔗</span>
+                    Related Topics & Keywords
+                </label>
+                <input type="text" id="relatedInput" class="form-input" 
+                    placeholder="Related fields, connected concepts, keywords...">
+            </div>
+
+            <!-- PDF Upload -->
+            <div class="form-group">
+                <label class="form-label">
+                    <span class="icon">📄</span>
+                    Additional Reference Documents (Optional)
+                </label>
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <p style="font-weight: 600; margin-bottom: 0.5rem;">Drag & Drop PDFs Here</p>
+                    <p style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">or click to browse</p>
+                    <input type="file" id="fileInput" accept=".pdf" multiple style="display: none;">
+                </div>
+                <div id="fileList" class="file-list hidden"></div>
+            </div>
+
+            <!-- Depth Selector -->
+            <div class="form-group">
+                <label class="form-label">
+                    <span class="icon">📊</span>
+                    Research Depth
+                </label>
+                <div class="depth-selector">
+                    <div class="depth-option active" data-depth="quick">
+                        <div class="icon">⚡</div>
+                        <div class="title">Quick</div>
+                        <div class="desc">~2000 words</div>
+                    </div>
+                    <div class="depth-option" data-depth="detailed">
+                        <div class="icon">📖</div>
+                        <div class="title">Detailed</div>
+                        <div class="desc">~4000 words</div>
+                    </div>
+                    <div class="depth-option" data-depth="comprehensive">
+                        <div class="icon">🎓</div>
+                        <div class="title">Comprehensive</div>
+                        <div class="desc">~6000+ words</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generate Button -->
+            <button class="generate-btn" id="generateBtn">
+                <span>🚀</span>
+                <span>Generate Research Paper</span>
+            </button>
+
+            <div id="progressContainer" class="progress-container hidden">
+                <div id="progressBar" class="progress-bar"></div>
+            </div>
+        </div>
+
+        <!-- Output Section -->
+        <div class="output-section hidden" id="outputSection">
+            <div class="output-header">
+                <div class="output-title">
+                    <span>📄</span>
+                    <h2 id="paperTitle">Research Paper</h2>
+                </div>
+                <div class="output-actions">
+                    <button class="action-btn" id="copyBtn">
+                        <span>📋</span>
+                        <span>Copy</span>
+                    </button>
+                    <button class="action-btn primary" id="downloadBtn">
+                        <span>⬇️</span>
+                        <span>Download PDF</span>
+                    </button>
+                </div>
+            </div>
+            <div class="output-content">
+                <div id="paperContent" class="markdown-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let uploadedFiles = [];
+        let pdfContent = '';
+        let currentDepth = 'quick';
+        let webSources = [];
+        let generatedPaper = '';
+
+        // File Upload Handling
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                if (file.type === 'application/pdf') {
+                    uploadedFiles.push(file);
+                    addFileToList(file);
+                    extractPDFText(file);
+                }
+            });
+        }
+
+        function addFileToList(file) {
+            fileList.classList.remove('hidden');
+            const item = document.createElement('div');
+            item.className = 'file-item';
+            item.innerHTML = `
+                <span>📄 ${file.name} (${(file.size / 1024).toFixed(1)} KB)</span>
+                <button onclick="removeFile('${file.name}')">Remove</button>
+            `;
+            fileList.appendChild(item);
+        }
+
+        function removeFile(fileName) {
+            uploadedFiles = uploadedFiles.filter(f => f.name !== fileName);
+            const items = fileList.querySelectorAll('.file-item');
+            items.forEach(item => {
+                if (item.textContent.includes(fileName)) {
+                    item.remove();
+                }
+            });
+            if (uploadedFiles.length === 0) {
+                fileList.classList.add('hidden');
+            }
+        }
+
+        async function extractPDFText(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/api/process', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (data.source_text) {
+                    pdfContent += data.source_text + '\n\n';
+                }
+            } catch (error) {
+                console.error('PDF extraction failed:', error);
+            }
+        }
+
+        // Depth Selection
+        document.querySelectorAll('.depth-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.depth-option').forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                currentDepth = option.dataset.depth;
+            });
+        });
+
+        // Generate Research Paper
+        document.getElementById('generateBtn').addEventListener('click', async () => {
+            const topic = document.getElementById('topicInput').value.trim();
+            if (!topic) {
+                alert('Please enter a research topic');
+                return;
+            }
+
+            const generateBtn = document.getElementById('generateBtn');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const outputSection = document.getElementById('outputSection');
+            const paperContent = document.getElementById('paperContent');
+            const paperTitle = document.getElementById('paperTitle');
+
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<span>⏳</span><span>Researching...</span>';
+            progressContainer.classList.remove('hidden');
+            outputSection.classList.remove('hidden');
+
+            // Show loading state
+            paperContent.innerHTML = `
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <div class="loading-text">🔍 Performing web research...</div>
+                </div>
+            `;
+
+            try {
+                // Step 1: Web Research (20%)
+                progressBar.style.width = '20%';
+                const webResearch = await fetch('/api/web-research', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: topic,
+                        depth: 5
+                    })
+                });
+
+                const webData = await webResearch.json();
+                webSources = webData.results || [];
+
+                // Step 2: Generate Paper (50%)
+                progressBar.style.width = '50%';
+                paperContent.innerHTML = `
+                    <div class="loading-state">
+                        <div class="spinner"></div>
+                        <div class="loading-text">✍️ Generating comprehensive research paper...</div>
+                    </div>
+                `;
+
+                const response = await fetch('/api/generate-research-paper', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic: topic,
+                        description: document.getElementById('descriptionInput').value,
+                        revolvesAround: document.getElementById('revolvesInput').value,
+                        howItWorks: document.getElementById('howWorksInput').value,
+                        relatedTopics: document.getElementById('relatedInput').value,
+                        pdfContent: pdfContent,
+                        webSources: webSources,
+                        depthLevel: currentDepth
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to generate paper');
+                }
+
+                // Step 3: Render (100%)
+                progressBar.style.width = '100%';
+                generatedPaper = data.paper;
+                
+                paperTitle.textContent = topic;
+                paperContent.innerHTML = marked.parse(generatedPaper);
+
+                // Add web sources section
+                if (webSources.length > 0) {
+                    const sourcesHTML = `
+                        <div class="sources-section">
+                            <h3 style="color: #00d4ff; margin-bottom: 1rem;">📚 Web Sources Used</h3>
+                            ${webSources.map(source => `
+                                <div class="source-card">
+                                    <div class="source-title">${source.title}</div>
+                                    <div class="source-snippet">${source.snippet}</div>
+                                    <div class="source-url">🔗 ${source.url}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    paperContent.innerHTML += sourcesHTML;
+                }
+
+                // Show stats
+                const stats = data.stats;
+                const statsHTML = `
+                    <div style="margin-top: 2rem; padding: 1.5rem; background: rgba(0, 212, 255, 0.1); border-radius: 1rem; border: 1px solid rgba(0, 212, 255, 0.3);">
+                        <h3 style="color: #00d4ff; margin-bottom: 1rem;">📊 Research Paper Statistics</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                            <div>
+                                <div style="font-size: 0.85rem; color: rgba(255,255,255,0.6);">Word Count</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #00d4ff;">${stats.wordCount}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.85rem; color: rgba(255,255,255,0.6);">Estimated Pages</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #9945ff;">${stats.estimatedPages}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.85rem; color: rgba(255,255,255,0.6);">Sources Used</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #00d4ff;">${stats.sourceCount}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                paperContent.innerHTML += statsHTML;
+
+                setTimeout(() => {
+                    progressContainer.classList.add('hidden');
+                    progressBar.style.width = '0%';
+                }, 1000);
+
+            } catch (error) {
+                paperContent.innerHTML = `
+                    <div class="error-message">
+                        <h3 style="margin-bottom: 0.5rem;">❌ Generation Failed</h3>
+                        <p>${error.message}</p>
+                        <p style="margin-top: 1rem; font-size: 0.9rem;">Please try again or adjust your inputs.</p>
+                    </div>
+                `;
+                progressContainer.classList.add('hidden');
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<span>🚀</span><span>Generate Research Paper</span>';
+            }
+        });
+
+        // Copy to Clipboard
+        document.getElementById('copyBtn').addEventListener('click', async () => {
+            try {
+                const text = document.getElementById('paperContent').innerText;
+                await navigator.clipboard.writeText(text);
+                
+                const copyBtn = document.getElementById('copyBtn');
+                const originalHTML = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<span>✅</span><span>Copied!</span>';
+                
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalHTML;
+                }, 2000);
+            } catch (error) {
+                alert('Failed to copy to clipboard');
+            }
+        });
+
+        // Download PDF
+        document.getElementById('downloadBtn').addEventListener('click', async () => {
+            const downloadBtn = document.getElementById('downloadBtn');
+            const originalHTML = downloadBtn.innerHTML;
+            downloadBtn.innerHTML = '<span>⏳</span><span>Generating PDF...</span>';
+            downloadBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/download-research-paper', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: document.getElementById('paperTitle').textContent,
+                        content: generatedPaper,
+                        author: 'Re:Search AI'
+                    })
+                });
+
+                if (!response.ok) throw new Error('PDF generation failed');
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${document.getElementById('paperTitle').textContent.replace(/\s+/g, '_')}_Research.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                downloadBtn.innerHTML = '<span>✅</span><span>Downloaded!</span>';
+                setTimeout(() => {
+                    downloadBtn.innerHTML = originalHTML;
+                    downloadBtn.disabled = false;
+                }, 2000);
+            } catch (error) {
+                alert('PDF download failed: ' + error.message);
+                downloadBtn.innerHTML = originalHTML;
+                downloadBtn.disabled = false;
+            }
+        });
+
+        // Smooth scroll to output
+        function scrollToOutput() {
+            document.getElementById('outputSection').scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+            });
+        }
+    </script>
+</body>
+</html>
